@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { push, ref, set } from "firebase/database";
 import { database } from "../../firebaseConfig";
+import Uploader from "./Uploader"
 
 export default function Home() {
   const [firstName, setFirstName] = useState("");
@@ -126,6 +127,7 @@ export default function Home() {
           </button>
         </div>
       </form>
+      <Uploader/>
     </main>
   );
 }
