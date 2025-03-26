@@ -13,11 +13,11 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex flex-col md:flex-row h-screen bg-cover bg-center bg-no-repeat"
+      className="flex flex-col md:flex-row h-screen bg-cover bg-center bg-no-repeat opacity-90"
       style={{ backgroundImage: "url('/pissa_bg.png')" }}
     >
       {/* Sección izquierda */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center text-white p-10">
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center text-white pl-40 pb-30 p-10">
         <Image
           src="/logo_pissa.png"
           width={300}
@@ -30,46 +30,38 @@ export default function LoginPage() {
         </p>
       </div>
       {/* Sección derecha */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-6 pr-20">
         <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
           <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">INICIAR SESIÓN</h2>
           <form onSubmit={handleLogin}>
             <div className="mb-4">
-              <label className="block text-gray-700">Correo Electrónico</label>
               <input
                 type="email"
                 className="w-full p-2 border border-gray-300 rounded mt-1 text-black"
-                placeholder="Ingresa correo electrónico"
+                placeholder="Correo electrónico"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700">Contraseña</label>
               <input
                 type="password"
                 className="w-full p-2 border border-gray-300 rounded mt-1 text-black"
-                placeholder="Ingresa contraseña"
+                placeholder="Contraseña"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <div className="mb-4 text-right">
-              <a href="#" className="text-blue-600 hover:underline">¿Olvidaste tu contraseña?</a>
-            </div>
             <button
               type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-            >
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
               Iniciar Sesión
             </button>
-            <a href="#_" className="relative inline-flex items-center justify-center px-10 py-4 overflow-hidden font-mono font-medium tracking-tighter text-white bg-gray-800 rounded-lg group">
-    <span className="absolute w-0 h-0 transition-all duration-500 ease-out bg-blue-500 rounded-full group-hover:w-56 group-hover:h-56"></span>
-    <span className="absolute inset-0 w-full h-full -mt-1 rounded-lg opacity-30 bg-gradient-to-b from-transparent via-transparent to-gray-700"></span>
-    <span className="relative">Submit</span>
-      </a>
+            <div className="mb-4 text-center py-4">
+              <a href="/dashboard" className="text-blue-500 hover:underline">¿Olvidaste tu contraseña?</a>
+            </div>
           </form>
         </div>
       </div>
