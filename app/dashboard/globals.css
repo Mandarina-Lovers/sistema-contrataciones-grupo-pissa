@@ -3,12 +3,6 @@
 :root {
   --background: #ffffff;
   --foreground: #ffffff;
-  --pissa-blue: #2d4583;
-  --pissa-green: #08b177;
-  --pissa-secondary-blue: #2f5ea0;
-  --pissa-secondary-light-blue: #2975a0;
-  --pissa-gray: #707070;
-  --pissa-light-gray: #8c9494;
 }
 
 @media (prefers-color-scheme: dark) {
