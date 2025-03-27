@@ -1,15 +1,10 @@
 import SideBar from "../ui/sidebar";
 import TopBar from "../ui/topbar";
-import MainDisplay from "../ui/maindisplay";
 
 export default function Dashboard() {
   return (
-    <div className="flex h-screen">
-      <SideBar></SideBar>
-      <div className="flex flex-col flex-1">
-        <TopBar></TopBar>
-        <MainDisplay></MainDisplay>
-      </div>
-    </div>
+    <main className="flex-1 bg-gray-100 p-4">
+      <h2 className="text-xl font-semibold text-black">Main Content</h2>
+    </main>
   );
 }
