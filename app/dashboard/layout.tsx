@@ -1,12 +1,9 @@
-import "./globals.css";
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
+  return (  
     <html lang="es">
       <body
         className={``}
