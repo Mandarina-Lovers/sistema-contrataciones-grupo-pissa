@@ -20,7 +20,7 @@ export default function SideBar() {
       <aside
         className={`fixed top-0 left-0 h-screen bg-blue-900 text-white p-4 w-64 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:flex`}
+        } md:translate-x-0 md:relative md:flex-none`}
       >
         <ul className="mt-4 space-y-2 w-full">
           <Link href="/dashboard">
