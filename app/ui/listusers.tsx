@@ -9,6 +9,7 @@ interface User {
   nombre?: string;
   apellidos?: string;
   rol?: string;
+  email?: string;
   telefono?: string;
 }
 
@@ -95,15 +96,17 @@ export default function ListUsers() {
               <th className="border p-2 text-black">Nombre</th>
               <th className="border p-2 text-black">Apellidos</th>
               <th className="border p-2 text-black">Rol</th>
+              <th className="border p-2 text-black">Email</th>
               <th className="border p-2 text-black">Teléfono</th>
             </tr>
           </thead>
           <tbody>
-            {sortedUsers.map(({ id, nombre, apellidos, rol, telefono }) => (
+            {users.map(({ id, nombre, apellidos, rol, email, telefono }) => (
               <tr key={id} className="text-center">
                 <td className="border p-2 text-black">{nombre || "N/A"}</td>
                 <td className="border p-2 text-black">{apellidos || "N/A"}</td>
                 <td className="border p-2 text-black">{rol || "N/A"}</td>
+                <td className="border p-2 text-black">{email || "N/A"}</td>
                 <td className="border p-2 text-black">{telefono || "N/A"}</td>
               </tr>
             ))}
