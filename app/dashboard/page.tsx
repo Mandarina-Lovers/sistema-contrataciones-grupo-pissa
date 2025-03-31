@@ -1,6 +1,6 @@
 "use client";
 
-import ListUsers from "../ui/listusers";
+import ListUsers from "../components/listusers";
 
 export default function Dashboard() {
   return(

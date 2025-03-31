@@ -16,7 +16,7 @@ const Credentials = () => {
   
   const handlePress = async () => {
   
-    var children_num = await (await get(ref(database, "usuarios"))).size;
+    var children_num =  (await get(ref(database, "usuarios"))).size;
     children_num++;
     var nodename = "user" + children_num + "/";
 
