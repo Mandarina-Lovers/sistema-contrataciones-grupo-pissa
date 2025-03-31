@@ -2,11 +2,10 @@
 import React, {useState} from "react";
 import {post2DB} from '../../../post2DB'
 import { set, ref, get } from "firebase/database";
-import {database} from '../../../firebaseConfig'
-import {generatePassword} from '../../../createSecurePassword'
+import {database} from '../../../firebaseConfig';
+import {generatePassword} from '../../../createSecurePassword';
 
 const Credentials = () => {
-  
 
   const [name, setname] = useState("");
   const [lastname, setlastname] = useState("");
