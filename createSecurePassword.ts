@@ -1,3 +1,4 @@
+"use client";
 const generatePassword = (length:any = 16) => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
     const array = new Uint8Array(length);
