@@ -18,9 +18,9 @@ export default function SideBar() {
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-0 left-0 h-screen bg-blue-900 text-white p-4 w-40 transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-screen bg-blue-900 text-white p-4 w-40 transition-transform duration-300 z-49 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 md:relative md:flex-none md:w-64`}
+        } md:translate-x-0 md:fixed md:flex-none md:w-64`}
       >
         <ul className="mt-12 space-y-2 w-full">
           <Link href="/dashboard">
