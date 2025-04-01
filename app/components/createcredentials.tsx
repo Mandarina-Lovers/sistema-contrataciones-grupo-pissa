@@ -44,8 +44,8 @@ const handlePress = async () => {
 }
 
 return (
-  <div className="w-300  mt-15 flex justify-center">
-    <div className="w-full max-w-sm flex flex-col text-center p-4 bg-white rounded-lg shadow-md">
+<div className="min-h-screen flex items-center justify-center ml-10 md:ml-100 w-150">
+      <div className="w-full max-w-sm flex flex-col text-center p-4 bg-white rounded-lg shadow-md">
       
       <h1 className="text-black text-lg font-semibold">Nombre</h1>
       <input type="text" className="text-black border border-gray-300 rounded p-2 w-full" value={name} onChange={(event) => {setname(event.target.value)}}/>
