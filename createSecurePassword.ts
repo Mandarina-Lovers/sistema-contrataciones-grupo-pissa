@@ -1,10 +1,7 @@
-"use client";
+import crypto from "crypto";
+
 const generatePassword = (length:any = 16) => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+';
-    const array = new Uint8Array(length);
-    window.crypto.getRandomValues(array);
-    
-    return Array.from(array, byte => chars[byte % chars.length]).join('');
+    return crypto.randomBytes(length).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, length);
 }
 
 console.log(generatePassword(16));
