@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import FormData from "form-data"; // form-data v4.0.1
 import Mailgun from "mailgun.js"; // mailgun.js v11.1.0
 
-async function sendEmailNotification(addressee: string, emalSubject: string, emalText:string) {
+async function sendEmailNotification(addressee: string, subject: string, text: string) {
   const mailgun = new Mailgun(FormData);
   const mg = mailgun.client({
     username: "api",
@@ -12,9 +12,9 @@ async function sendEmailNotification(addressee: string, emalSubject: string, ema
 
   const data = await mg.messages.create("sandbox7a10387ae554432ca8215e5f706efa72.mailgun.org", {
     from: "Mailgun Sandbox <postmaster@sandbox7a10387ae554432ca8215e5f706efa72.mailgun.org>",
-    to: ["Usuario <dandavarteaga@gmail.com>"],
-    subject: "Hola usuario",
-    text: "Felicidades, has iniciado sesión en tu cuenta del sistema de contrataciones de Grupo Pissa",
+    to: [addressee],       // Se usa el parámetro recibido
+    subject: subject,      // Se usa el parámetro recibido
+    text: text,            // Se usa el parámetro recibido
   });
 
   return data;

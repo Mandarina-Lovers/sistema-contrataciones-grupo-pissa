@@ -22,6 +22,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/pruebaBack/emailSender.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/pruebaBack/emailSender.js", "app/pruebaBack/PdfModal.jsx"],
   "exclude": ["node_modules"]
 }

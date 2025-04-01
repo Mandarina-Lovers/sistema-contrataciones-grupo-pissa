@@ -1,14 +1,18 @@
-// components/PdfModal.jsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { storage } from '../../firebaseConfig';
 
-export default function PdfModal({ filePath, onClose }) {
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface PdfModalProps {
+  filePath: string;
+  onClose: () => void;
+}
+
+export default function PdfModal({ filePath, onClose }: PdfModalProps): any {
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPdfUrl = async () => {
@@ -68,16 +72,15 @@ export default function PdfModal({ filePath, onClose }) {
         
         <div className="w-full h-[80vh]">
           <iframe 
-            src={pdfUrl}
+            src={pdfUrl || ""}
             className="w-full h-full border"
-            frameBorder="0"
             allowFullScreen
           ></iframe>
         </div>
         
         <div className="mt-4 flex justify-end">
           <a 
-            href={pdfUrl} 
+            href={pdfUrl || ""}
             download
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >

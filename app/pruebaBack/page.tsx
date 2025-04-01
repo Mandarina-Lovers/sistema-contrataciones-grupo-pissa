@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { push, ref, set } from "firebase/database";
 import { database } from "../../firebaseConfig";
-import Uploader from "./Uploader";
-import PdfModal from './PdfModal';
+import Uploader from "@/app/ui/Uploader";
+import PdfModal from '../ui/PdfModal';
 
 export default function Home() {
   const [firstName, setFirstName] = useState("");

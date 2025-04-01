@@ -22,6 +22,7 @@ export default function Formulario() {
   
       // Enviar datos al endpoint
       try {
+        //sendEmail
         const response = await fetch("/api/sendEmail", {
           method: "POST",
           headers: {
@@ -42,9 +43,12 @@ export default function Formulario() {
       } catch (emailError: any) {
         console.error("Error sending email:", emailError);
       }
+
+      // Guardar el candidateId en una cookie
+      document.cookie = `candidateId=user_001; path=/; secure; samesite=strict; max-age=86400`; // Expira en 1 día
   
       // Redirigir después del inicio de sesión exitoso
-      router.push("/dashboard");
+      router.push("/expediente-candidatos/opcion2");
     } catch (err: any) {
       console.error("Error during login:", err);
     }
