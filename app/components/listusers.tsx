@@ -47,24 +47,15 @@ export default function ListUsers() {
   }, []);
 
   const sortedUsers = [...users].sort((a, b) => {
-    // Sort by "nombre" or "apellidos" depending on sortOption
     let prop: keyof User = "nombre";
     if (sortOption.includes("apellido")) prop = "apellidos";
 
     const textA = (a[prop] || "").toLowerCase();
     const textB = (b[prop] || "").toLowerCase();
 
-    if (sortOption.includes("ZA")) {
-      // Descending
-      if (textA < textB) return 1;
-      if (textA > textB) return -1;
-      return 0;
-    } else {
-      // Ascending
-      if (textA < textB) return -1;
-      if (textA > textB) return 1;
-      return 0;
-    }
+    return sortOption.includes("ZA") 
+      ? textB.localeCompare(textA)
+      : textA.localeCompare(textB);
   });
 
   return (
@@ -89,6 +80,7 @@ export default function ListUsers() {
         </select>
       </div>
 
+      {/* User Table */}
       <div className="overflow-x-auto bg-white p-4 rounded shadow">
         <table className="w-full border-collapse border border-gray-300">
           <thead>
@@ -101,7 +93,7 @@ export default function ListUsers() {
             </tr>
           </thead>
           <tbody>
-            {users.map(({ id, nombre, apellidos, rol, email, telefono }) => (
+            {sortedUsers.map(({ id, nombre, apellidos, rol, email, telefono }) => (
               <tr key={id} className="text-center">
                 <td className="border p-2 text-black">{nombre || "N/A"}</td>
                 <td className="border p-2 text-black">{apellidos || "N/A"}</td>
@@ -116,4 +108,3 @@ export default function ListUsers() {
     </main>
   );
 }
-// ...existing code...
