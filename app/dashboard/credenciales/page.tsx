@@ -6,7 +6,5 @@ export default function Credentials() {
 return (
     <CreateCredentials/>
 )
-
-  
 }
 
