@@ -1,4 +1,5 @@
 import "./globals.css";
+import { poppins } from '@/app/components/fonts';
 
 
 export default function RootLayout({
@@ -9,7 +10,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={``}
+        className={`${poppins.className}`}
       >
         {children}
       </body>
