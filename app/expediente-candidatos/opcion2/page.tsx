@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Check, X, Clock } from 'lucide-react';
 import { ref, get, update } from 'firebase/database';
 import { database } from '@/firebaseConfig';
-import Uploader from "@/app/ui/Uploader";
-import ManagerViewer from "@/app/ui/ManagerViewer";
+import Uploader from "@/app/components/Uploader";
+import ManagerViewer from "@/app/components/ManagerViewer";
 
 // Definición de tipos
 type DocumentState = 'approved' | 'reviewing' | 'rejected' | 'not_uploaded';
