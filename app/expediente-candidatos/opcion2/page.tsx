@@ -1,14 +1,14 @@
 'use client'
 
-// components/DocumentManager.tsx
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Check, X, Clock, Upload, Download, Trash } from 'lucide-react';
-
+import { useState, useEffect } from 'react';
+import { ChevronDown, ChevronUp, Check, X, Clock } from 'lucide-react';
+import { ref, get, update } from 'firebase/database';
+import { database } from '@/firebaseConfig';
 import Uploader from "@/app/ui/Uploader";
 import ManagerViewer from "@/app/ui/ManagerViewer";
 
 // Definición de tipos
-type DocumentState = 'approved' | 'pending' | 'reviewing' | 'rejected' | 'not_uploaded';
+type DocumentState = 'approved' | 'reviewing' | 'rejected' | 'not_uploaded';
 
 interface ManualFields {
   value: string;
@@ -25,10 +25,20 @@ interface Document {
 // Constantes de estados
 const DOCUMENT_STATES: Record<string, DocumentState> = {
   APPROVED: 'approved',
-  PENDING: 'pending',
   REVIEWING: 'reviewing', 
   REJECTED: 'rejected',
   NOT_UPLOADED: 'not_uploaded'
+};
+
+// Mapeo de estados de la BD a estados del componente
+const mapDbStateToComponentState = (dbState: string): DocumentState => {
+  switch(dbState) {
+    case 'aprobado': return DOCUMENT_STATES.APPROVED;
+    case 'pendiente_de_revisar': return DOCUMENT_STATES.REVIEWING;
+    case 'rechazado': return DOCUMENT_STATES.REJECTED;
+    case 'no_subido': return DOCUMENT_STATES.NOT_UPLOADED;
+    default: return DOCUMENT_STATES.NOT_UPLOADED;
+  }
 };
 
 // Props para el componente StateIcon
@@ -55,33 +65,168 @@ const StateIcon: React.FC<StateIconProps> = ({ state }) => {
 };
 
 const DocumentManager: React.FC = () => {
-  // Lista de documentos con su estado
-  const [documents, setDocuments] = useState<Document[]>([
-    { id: 1, name: 'INE', state: DOCUMENT_STATES.APPROVED, file: null, manualFields: { value: '' } },
-    { id: 2, name: 'CV', state: DOCUMENT_STATES.APPROVED, file: null, manualFields: { value: '' } },
-    { id: 3, name: 'Estado de cuenta', state: DOCUMENT_STATES.PENDING, file: null, manualFields: { value: '' } },
-    { id: 4, name: 'CURP', state: DOCUMENT_STATES.APPROVED, file: null, manualFields: { value: '' } },
-    { id: 5, name: 'Comprobante de Domicilio', state: DOCUMENT_STATES.REJECTED, file: null, manualFields: { value: '' } },
-  ]);
-
-  // Documento seleccionado actualmente
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expedienteId, setExpedienteId] = useState<string | null>(null);
+  const [candidateId, setCandidateId] = useState<string | null>(null);
   
-  // Manejar carga de archivos
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. Obtener el ID del candidato de la cookie
+        const candidateIdFromCookie = getCandidateIdFromCookies();
+        
+        if (!candidateIdFromCookie) {
+          setError('No se encontró el ID del candidato en las cookies');
+          setLoading(false);
+          return;
+        }
+        
+        setCandidateId(candidateIdFromCookie);
+        
+        // 2. Obtener los datos del usuario
+        const userRef = ref(database, `usuarios/${candidateIdFromCookie}`);
+        const userSnapshot = await get(userRef);
+        
+        if (!userSnapshot.exists()) {
+          setError('No se encontró el usuario en la base de datos');
+          setLoading(false);
+          return;
+        }
+        
+        // 3. Buscar el expediente asociado al candidato
+        const expedientesRef = ref(database, 'expedientes');
+        const expedientesSnapshot = await get(expedientesRef);
+        
+        let foundExpedienteId = null;
+        
+        if (expedientesSnapshot.exists()) {
+          const expedientes = expedientesSnapshot.val();
+          
+          // Buscar el expediente que corresponde al candidato
+          for (const [id, data] of Object.entries(expedientes)) {
+            if ((data as { id_candidato: string }).id_candidato === candidateIdFromCookie) {
+              foundExpedienteId = id;
+              setExpedienteId(id);
+              break;
+            }
+          }
+        }
+        
+        if (!foundExpedienteId) {
+          // Si no existe un expediente, lo creamos
+          const newExpedienteRef = ref(database, 'expedientes/expediente' + Date.now());
+          await update(newExpedienteRef, {
+            id_candidato: candidateIdFromCookie,
+            documentos: {
+              ActaNacimiento: {
+                estado: 'no_subido',
+                url: '',
+                campos: {}
+              },
+              CURP: {
+                estado: 'no_subido',
+                url: '',
+                campos: {}
+              },
+              INE: {
+                estado: 'no_subido',
+                url: '',
+                campos: {}
+              },
+              CV: {
+                estado: 'no_subido',
+                url: '',
+                campos: {}
+              }
+            }
+          });
+          
+          // Obtener el ID generado
+          const newExpedienteSnapshot = await get(newExpedienteRef);
+          foundExpedienteId = newExpedienteSnapshot.key;
+          setExpedienteId(foundExpedienteId);
+        }
+        
+        // 4. Obtener los datos del expediente
+        const expedienteRef = ref(database, `expedientes/${foundExpedienteId}/documentos`);
+        const expedienteSnapshot = await get(expedienteRef);
+        
+        // Si no hay documentos, inicializamos con valores por defecto
+        if (!expedienteSnapshot.exists()) {
+          setError('No se encontraron documentos en el expediente');
+          setLoading(false);
+          return;
+        }
+        
+        // 5. Transformar los datos a la estructura esperada por el componente
+        const expedienteData = expedienteSnapshot.val();
+        const docsArray: Document[] = Object.entries(expedienteData).map(([docName, docData]: [string, any], index) => {
+          return {
+            id: index + 1,
+            name: docName,
+            state: mapDbStateToComponentState(docData.estado),
+            file: docData.url ? extractFileNameFromUrl(docData.url) : null,
+            manualFields: { 
+              value: docData.campos ? Object.values(docData.campos).join(', ') : ''
+            }
+          };
+        });
+        
+        setDocuments(docsArray);
+        if (docsArray.length > 0) {
+          setSelectedDoc(docsArray[0].id);
+        }
+        
+      } catch (err) {
+        console.error('Error al cargar datos:', err);
+        setError('Error al cargar los datos del expediente');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserData();
+  }, []);
+  
+  // Función auxiliar para obtener el candidateId de las cookies
+  const getCandidateIdFromCookies = (): string | null => {
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie.split('; ');
+      const candidateCookie = cookies.find(row => row.startsWith('candidateId='));
+      return candidateCookie ? candidateCookie.split('=')[1] : null;
+    }
+    return null;
+  };
+  
+  // Función auxiliar para extraer el nombre del archivo de una URL
+  const extractFileNameFromUrl = (url: string): string => {
+    if (!url) return '';
+    // Si url es algo como "pruebaInicial/archivo.pdf", extraemos "archivo.pdf"
+    return url.split('/').pop() || url;
+  };
 
+  // Manejar carga de archivos
   const handleFileUpload = (fileName: string, snapshot: unknown) => {
+    // Actualizar el estado local
     setDocuments(prev =>
       prev.map(doc =>
         doc.id === selectedDoc
-          ? { ...doc, file: fileName, state: DOCUMENT_STATES.PENDING }
+          ? { ...doc, file: fileName, state: DOCUMENT_STATES.REVIEWING }
           : doc
       )
     );
+    
     console.log("Archivo subido:", fileName, snapshot);
   };
   
   // Eliminar archivo
   const handleDeleteFile = (): void => {
+    // Actualizar el estado local
     setDocuments(documents.map(doc => 
       doc.id === selectedDoc 
         ? { ...doc, file: null, state: DOCUMENT_STATES.NOT_UPLOADED } 
@@ -91,15 +236,25 @@ const DocumentManager: React.FC = () => {
   
   // Actualizar campo manual
   const handleManualFieldChange = (value: string): void => {
+    // Actualizar el estado local
     setDocuments(documents.map(doc => 
       doc.id === selectedDoc 
         ? { ...doc, manualFields: { ...doc.manualFields, value } } 
         : doc
     ));
+
   };
 
   // Encontrar el documento seleccionado
   const currentDocument = documents.find(doc => doc.id === selectedDoc);
+  
+  if (loading) {
+    return <div className="p-6 text-center">Cargando datos del expediente...</div>;
+  }
+  
+  if (error) {
+    return <div className="p-6 text-center text-red-500">{error}</div>;
+  }
   
   return (
     <div className="flex w-full border border-gray-200 rounded-lg overflow-hidden">
@@ -159,15 +314,18 @@ const DocumentManager: React.FC = () => {
               
               {currentDocument.file ? (
                 <ManagerViewer
-                  // Construimos la ruta a partir del nombre del archivo; ajusta según tu lógica.
-                  filePath={`pruebaInicial/${currentDocument.file}`}
-                  fileName={currentDocument.file}
-                  // Al presionar el ícono Eye, ManagerViewer mostrará el PdfModal (su lógica interna)
-                  // Se pasa la función que elimina el archivo (y actualiza el estado en DocumentManager)
-                  onFileDeleted={handleDeleteFile}
+                expedienteId={expedienteId || undefined}
+                documentoId={currentDocument.name}
+                fileName={currentDocument.file}
+                folder="pruebaInicial"
+                onFileDeleted={handleDeleteFile}
                 />
               ) : (
-                <Uploader onFileUploaded={handleFileUpload} />
+                <Uploader 
+                  expedienteId={expedienteId || undefined}
+                  documentoId={currentDocument.name}
+                  onFileUploaded={handleFileUpload}
+                />
               )}
             </div>
             

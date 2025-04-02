@@ -1,23 +1,61 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, Trash } from 'lucide-react';
-import { ref, deleteObject } from 'firebase/storage';
-import { storage } from '../../firebaseConfig';
-import PdfModal from '@/app/ui/PdfModal'
+import { ref as storageRef, deleteObject, getDownloadURL } from 'firebase/storage';
+import { ref as dbRef, update } from 'firebase/database';
+import { storage, database } from '../../firebaseConfig';
+import PdfModal from '@/app/ui/PdfModal';
 
 interface ManagerViewerProps {
-  filePath: string;
+  expedienteId?: string;
+  documentoId?: string;
   fileName: string;
   onFileDeleted?: () => void;
+  folder?: string;
 }
-
-export default function ManagerViewer({ filePath, fileName, onFileDeleted }: ManagerViewerProps) {
+export default function ManagerViewer({ 
+  expedienteId, 
+  documentoId, 
+  fileName, 
+  onFileDeleted,
+  folder = "pruebaInicial" 
+}: ManagerViewerProps) {
   const [showPdf, setShowPdf] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Al pulsar el botón "ver", se abre el PdfModal internamente
+  // Construir la ruta completa del archivo
+  const filePath = expedienteId && documentoId 
+  ? `${folder}/${expedienteId}/${documentoId}/${fileName}`
+  : `${folder}/${fileName}`;
+
+  // Obtener la URL de descarga cuando el componente se monta
+  useEffect(() => {
+    const fetchPdfUrl = async () => {
+      try {
+        setLoading(true);
+        const url = await getDownloadURL(storageRef(storage, filePath));
+        setPdfUrl(url);
+      } catch (err) {
+        console.error("Error al obtener URL de descarga:", err);
+        setError("No se pudo cargar el PDF");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPdfUrl();
+  }, [filePath]);
+
+  // Al pulsar el botón "ver", se abre el PdfModal con la URL obtenida
   const handleView = () => {
-    setShowPdf(true);
+    if (pdfUrl) {
+      setShowPdf(true);
+    } else {
+      alert("Espera a que el documento termine de cargar");
+    }
   };
 
   // Cierra el PdfModal
@@ -25,27 +63,65 @@ export default function ManagerViewer({ filePath, fileName, onFileDeleted }: Man
     setShowPdf(false);
   };
 
-  // Se borra el archivo de Firebase Storage y se ejecuta la callback onFileDeleted (si se pasó)
+  // Se borra el archivo de Firebase Storage y se actualiza la BD
   const handleDeleteFile = async () => {
     try {
-      const fileRef = ref(storage, filePath);
-      await deleteObject(fileRef);
-      if (onFileDeleted) onFileDeleted();
+      // 1. Borrar el archivo de Firebase Storage
+      const fileReference = storageRef(storage, filePath);
+      await deleteObject(fileReference);
+      console.log("Archivo eliminado de Storage:", filePath);
+
+      // 2. Actualizar la base de datos si se proporcionaron expedienteId y documentoId
+      if (expedienteId && documentoId) {
+        const docRef = dbRef(database, `expedientes/${expedienteId}/documentos/${documentoId}`);
+        
+        await update(docRef, {
+          url: '',
+          estado: 'no_subido'
+        });
+        
+        console.log("Base de datos actualizada: se eliminó la referencia al archivo");
+      }
+
+      // 3. Ejecutar la callback si existe
+      if (onFileDeleted) {
+        onFileDeleted();
+      }
     } catch (err) {
-      console.error("Error deleting file:", err);
+      console.error("Error al eliminar el archivo:", err);
+      alert("Ocurrió un error al eliminar el archivo");
     }
   };
 
   return (
     <div className="flex items-center justify-center space-x-2">
-      <button onClick={handleView} className="bg-blue-900 text-white p-4 rounded-lg inline-block">
+      <button 
+        onClick={handleView} 
+        className="bg-blue-900 text-white p-4 rounded-lg inline-block"
+        disabled={loading || !!error}
+      >
         <Eye size={32} />
       </button>
-      <span>{fileName}</span>
-      <button onClick={handleDeleteFile} className="text-red-500">
+      
+      <span className="max-w-xs truncate" title={fileName}>{fileName}</span>
+      
+      <button 
+        onClick={handleDeleteFile} 
+        className="text-red-500 hover:text-red-700"
+        disabled={loading}
+      >
         <Trash size={24} />
       </button>
-      {showPdf && <PdfModal filePath={filePath} onClose={handleCloseModal} />}
+      
+      {loading && <span className="text-gray-500 text-sm">Cargando...</span>}
+      {error && <span className="text-red-500 text-sm">{error}</span>}
+      
+      {showPdf && pdfUrl && (
+        <PdfModal 
+          pdfUrl={pdfUrl} 
+          onClose={handleCloseModal} 
+        />
+      )}
     </div>
   );
 }

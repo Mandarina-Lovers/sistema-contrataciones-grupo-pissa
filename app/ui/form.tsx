@@ -18,9 +18,10 @@ export default function Formulario() {
     e.preventDefault();
     try {
       const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredentials.user.uid;
       console.log("Logged in as:", userCredentials.user);
   
-      // Enviar datos al endpoint
+      {/* SendEmail
       try {
         //sendEmail
         const response = await fetch("/api/sendEmail", {
@@ -43,10 +44,11 @@ export default function Formulario() {
       } catch (emailError: any) {
         console.error("Error sending email:", emailError);
       }
+      */}
 
       // Guardar el candidateId en una cookie
-      document.cookie = `candidateId=user_001; path=/; secure; samesite=strict; max-age=86400`; // Expira en 1 día
-  
+      document.cookie = `candidateId=${uid}; path=/; secure; samesite=strict; max-age=86400`; // Expira en 1 día
+
       // Redirigir después del inicio de sesión exitoso
       router.push("/expediente-candidatos/opcion2");
     } catch (err: any) {

@@ -1,62 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { getDownloadURL, ref } from 'firebase/storage';
-import { storage } from '../../firebaseConfig';
+import React from 'react';
 
 interface PdfModalProps {
-  filePath: string;
+  pdfUrl: string;  // Cambiado de filePath a pdfUrl
   onClose: () => void;
 }
 
-export default function PdfModal({ filePath, onClose }: PdfModalProps): any {
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchPdfUrl = async () => {
-      try {
-        const fileRef = ref(storage, filePath);
-        const url = await getDownloadURL(fileRef);
-        setPdfUrl(url);
-      } catch (err) {
-        setError('Error al cargar el PDF');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPdfUrl();
-  }, [filePath]);
-
-  if (loading) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg">
-          <p>Cargando PDF...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white p-8 rounded-lg">
-          <p className="text-red-500">{error}</p>
-          <button 
-            onClick={onClose}
-            className="mt-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-          >
-            Cerrar
-          </button>
-        </div>
-      </div>
-    );
-  }
-
+export default function PdfModal({ pdfUrl, onClose }: PdfModalProps): any {  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-4 rounded-lg max-w-4xl w-full max-h-screen overflow-auto">
@@ -72,7 +23,7 @@ export default function PdfModal({ filePath, onClose }: PdfModalProps): any {
         
         <div className="w-full h-[80vh]">
           <iframe 
-            src={pdfUrl || ""}
+            src={pdfUrl}
             className="w-full h-full border"
             allowFullScreen
           ></iframe>
@@ -80,7 +31,7 @@ export default function PdfModal({ filePath, onClose }: PdfModalProps): any {
         
         <div className="mt-4 flex justify-end">
           <a 
-            href={pdfUrl || ""}
+            href={pdfUrl}
             download
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
