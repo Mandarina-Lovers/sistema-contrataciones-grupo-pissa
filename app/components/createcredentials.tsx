@@ -49,7 +49,9 @@ export default function CreateCredentials() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center ml-10 md:ml-100 w-150">
+    <html>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <div className=" min-h-screen flex items-center ml-60 w-200 md:ml-60 md:w-100">
       <div className="w-full max-w-sm flex flex-col text-center p-4 bg-white rounded-lg shadow-md">
         <h1 className="text-black text-lg font-semibold">Nombre</h1>
         <input
@@ -108,5 +110,6 @@ export default function CreateCredentials() {
         </button>
       </div>
     </div>
+    </html>
   );
 }
