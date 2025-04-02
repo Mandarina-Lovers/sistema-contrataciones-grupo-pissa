@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-export default function Home() {
-    return(
-      <div>
-        <strong>Dashboard</strong>
-      </div>
-    )
-  }
-=======
 import ListUsers from "../components/listusers";
 import CountUsers from "../components/countusers";
 
@@ -19,4 +10,3 @@ export default async function Dashboard() {
     </div>
   );
 }
->>>>>>> admin-dashboard

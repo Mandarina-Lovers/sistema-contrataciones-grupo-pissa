@@ -1,20 +1,3 @@
-<<<<<<< HEAD
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (  
-    <html lang="es">
-      <body
-        className={``}
-      >
-        {children}
-      </body>
-    </html>
-  );
-}
-=======
 import "../globals.css";
 import SideBar from "../components/sidebar";
 
@@ -28,4 +11,3 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
->>>>>>> admin-dashboard
