@@ -45,8 +45,8 @@ const Uploader: React.FC<UploaderProps> = ({
       // 2. Si se proporcionaron expedienteId y documentoId, actualizar la BD
       if (expedienteId && documentoId) {
         try {
-           // Obtener la URL de descarga una sola vez
-          const downloadUrl = await getDownloadURL(fileReference);
+          // Obtener la URL de descarga una sola vez
+          //const downloadUrl = await getDownloadURL(fileReference);
 
           // Verificar si existe la ruta en la BD
           const docRef = dbRef(database, `expedientes/${expedienteId}/documentos/${documentoId}`);
@@ -55,13 +55,13 @@ const Uploader: React.FC<UploaderProps> = ({
           if (docSnapshot.exists()) {
             // Actualizar documento existente
             await update(docRef, {
-              url: downloadUrl, // Guardar la URL general, no la de descarga
+              url: filePath, // Guardar la URL general, no la de descarga
               estado: "pendiente_de_revisar"
             });
           } else {
             // Crear nuevo documento si no existe
             await update(docRef, {
-              url: downloadUrl,
+              url: filePath,
               estado: "pendiente_de_revisar",
               campos: {}
             });
