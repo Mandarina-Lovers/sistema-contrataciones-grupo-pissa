@@ -195,12 +195,7 @@ const DocumentManager: React.FC = () => {
   
   // Función auxiliar para obtener el candidateId de las cookies
   const getCandidateIdFromCookies = (): string | null => {
-    if (typeof document !== 'undefined') {
-      const cookies = document.cookie.split('; ');
-      const candidateCookie = cookies.find(row => row.startsWith('candidateId='));
-      return candidateCookie ? candidateCookie.split('=')[1] : null;
-    }
-    return null;
+    return "B7eXqDrAYVeHQ9dVAwb5hcAzd872"
   };
   
   // Función auxiliar para extraer el nombre del archivo de una URL
