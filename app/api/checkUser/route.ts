@@ -1,31 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { database } from "../../../firebaseConfig";
+import { database } from "@/firebaseConfig";
 import { ref, get } from "firebase/database";
 
 export async function POST(request: NextRequest) {
   try {
-    // Extraer el userId del header de la solicitud
-    const userIdHeader = request.headers.get("X-UserId") || "";
-    const userId = userIdHeader.trim();
+    // 1. Extraer userId desde el header
+    const userId = request.headers.get("X-UserId")?.trim();
 
     if (!userId) {
       return NextResponse.json({ blocked: true }, { status: 401 });
     }
 
-    // Obtener los datos del usuario desde Firebase
+    // 2. Consultar usuario en Firebase Realtime DB
     const snapshot = await get(ref(database, `usuarios/${userId}`));
+
+    // 3. Validar si el usuario existe
     if (!snapshot.exists()) {
-      return NextResponse.json({ blocked: true }, { status: 404 });
+      // Podrías devolver también "blocked: true" para evitar fuga de información
+      return NextResponse.json({ blocked: true }, { status: 403 });
     }
 
-    const { estadoUsuario } = snapshot.val() || {};
+    const data = snapshot.val();
+    const estadoUsuario = data.estadoUsuario;
 
-    // Si estadoUsuario == "bloqueado", return { blocked: true } else return { blocked: false }
-    return NextResponse.json({
-      blocked: estadoUsuario === "bloqueado",
-    });
+    // 4. Evaluar si está bloqueado
+    const isBlocked = estadoUsuario === "bloqueado";
+
+    return NextResponse.json({ blocked: isBlocked });
+
   } catch (error) {
-    console.error("Error checking user state:", error);
+    console.error("Error al verificar usuario:", error);
     return NextResponse.json({ blocked: true }, { status: 500 });
   }
 }
