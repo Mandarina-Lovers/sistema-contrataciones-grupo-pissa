@@ -49,14 +49,20 @@ export default function CreateCredentials() {
   };
 
   return (
+<<<<<<< Updated upstream
     <html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <div className=" min-h-screen flex items-center ml-60 w-200 md:ml-60 md:w-100">
       <div className="w-full max-w-sm flex flex-col text-center p-4 bg-white rounded-lg shadow-md">
         <h1 className="text-black text-lg font-semibold">Nombre</h1>
+=======
+    <div className=" flex items-center justify-center w-full h-full">
+      <div className="w-full max-w-sm flex flex-col p-8 bg-white rounded-xl shadow-md border border-gray-300">
+        <h1 className="text-black">Nombre</h1>
+>>>>>>> Stashed changes
         <input
           type="text"
-          className="text-black border border-gray-300 rounded p-2 w-full"
+          className="text-black border border-gray-300 bg-[#fafbfc] rounded-lg p-2 w-full"
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
@@ -64,7 +70,7 @@ export default function CreateCredentials() {
         <div className="text-black mt-4">Apellidos</div>
         <input
           type="text"
-          className="text-black border border-gray-300 rounded p-2 w-full"
+          className="text-black border border-gray-300 bg-[#fafbfc] rounded-lg p-2 w-full"
           value={lastname}
           onChange={(event) => setLastname(event.target.value)}
         />
@@ -72,7 +78,7 @@ export default function CreateCredentials() {
         <div className="text-black mt-4">Correo</div>
         <input
           type="text"
-          className="text-black border border-gray-300 rounded p-2 w-full"
+          className="text-black border border-gray-300 bg-[#fafbfc] rounded-lg p-2 w-full"
           value={mail}
           onChange={(event) => setMail(event.target.value)}
         />
@@ -80,30 +86,34 @@ export default function CreateCredentials() {
         <div className="text-black mt-4">Teléfono</div>
         <input
           type="text"
-          className="text-black border border-gray-300 rounded p-2 w-full"
+          className="text-black border border-gray-300 bg-[#fafbfc] rounded-lg p-2 w-full"
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
         />
 
-        <div className="text-black mt-4">Tipo de Usuario</div>
-        <div className="flex-col">
-          <p className="text-black mt-4">Candidato</p>
-          <input
-            type="checkbox"
-            value="candidato"
-            onChange={(event) => setRole(event.target.value)}
-          />
-          <p className="text-black mt-4">RH</p>
-          <input
-            type="checkbox"
-            disabled
-            value="rh"
-            onChange={(event) => setRole(event.target.value)}
-          />
+        {/*<div className="text-black mt-4">Tipo de Usuario</div>*/}
+        <div className="flex-row flex items-center pb-10 pt-4 justify-between">
+          <div className="flex-row flex">
+            <p className="text-black pr-2">Candidato</p>
+            <input
+              type="checkbox"
+              value="candidato"
+              onChange={(event) => setRole(event.target.value)}
+            />
+          </div>
+          <div className="flex-row flex"> 
+            <p className="text-black pl-8 pr-2">RH</p>
+            <input
+              type="checkbox"
+              disabled
+              value="rh"
+              onChange={(event) => setRole(event.target.value)}
+            />
+          </div>
         </div>
 
         <button
-          className="bg-blue-700 hover:bg-blue-800 active:bg-blue-1000 p-2 rounded border-none text-white px-6 py-5 text-center text-lg inline-block m-1"
+          className="bg-[#2d4583] text-white py-2 rounded-lg hover:bg-[#08b177] transition px-6 text-center text-lg inline-block m-1"
           onClick={handlePress}
         >
           Crear Credenciales
