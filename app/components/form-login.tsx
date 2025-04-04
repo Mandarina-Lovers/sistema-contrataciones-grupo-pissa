@@ -1,5 +1,6 @@
-'use client';
+'use client'
 
+//Firebase
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -13,11 +14,12 @@ export default function Formulario() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
   const [mostrarContraseña, setShowPassword] = useState(false);
 
   /*Andy (04.04 9:28) Para las alertas durante el login*/
   const [alertaAcceso, setAlertaAcceso] = useState<{type: 'denegado', mensaje: string} | null> (null);
+
+  const router = useRouter();
 
   /*Andy (04.04 9:54) Esto es para que la alerta de eror desaparezca solo cuando el usuario
   ha cambiado por lo menos un valor en el campo del email o contraseña*/ 
@@ -39,35 +41,56 @@ export default function Formulario() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
-
     try {
-      // Autenticación con Firebase
       const userCredentials = await signInWithEmailAndPassword(auth, email, password);
       const uid = userCredentials.user.uid;
-
-      // Llamar a la API para guardar la cookie de forma segura
-      const response = await fetch("/api/saveUIDCookie", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ uid }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error guardando la cookie");
+      console.log("Logged in as:", userCredentials.user);
+  
+      {/* SendEmail
+      try {
+        //sendEmailk
+        const response = await fetch("/api/sendEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            addressee: email,
+            subject: "Inicio de sesión exitoso",
+            text: "Has iniciado sesión correctamente en el sistema de contrataciones.",
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error("Error sending email");
+        }
+  
+        console.log("Login email sent successfully");
+      } catch (emailError: any) {
+        console.error("Error sending email:", emailError);
       }
+      */}
 
-      if (response.ok) {
-        console.log("El uid se ha guardado en una cookie :)");
-      }
+      // Guardar el candidateId en una cookie
+      document.cookie = `candidateId=${uid}; path=/; secure; samesite=strict; max-age=86400`; // Expira en 1 día
 
-      // Redirigir al dashboard o expediente del candidato
+      // Redirigir después del inicio de sesión exitoso
       router.push("/expediente-candidatos/opcion2");
-
     } catch (err: any) {
-      console.error("Error durante login:", err);
+      console.error("Error during login:", err);
+
+
+
+
+
+      
+/**********************************************************************************
+ Alerta de Acceso Denegado*/
+      setAlertaAcceso({
+        type: 'denegado',
+        mensaje: 'El usuario o la contraseña son incorrectos'
+      });
+/************************************************************************************/
     }
   };
 
