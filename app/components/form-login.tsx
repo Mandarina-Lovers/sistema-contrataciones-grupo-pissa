@@ -1,27 +1,21 @@
 'use client'
-
 //Firebase
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 
-// Íconos 
-import { Eye, EyeOff, X} from "lucide-react";
-
+// Componentes propios
+import { Alerta } from "./alertaPantalla";
+import {CampoContrasena} from "./campoContrasena";
 
 export default function Formulario() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [mostrarContraseña, setShowPassword] = useState(false);
-
   /*Andy (04.04 9:28) Para las alertas durante el login*/
   const [alertaAcceso, setAlertaAcceso] = useState<{type: 'denegado', mensaje: string} | null> (null);
-
   const router = useRouter();
-
-  /*Andy (04.04 9:54) Esto es para que la alerta de eror desaparezca solo cuando el usuario
+  /*Andy (04.04 9:54) Esto es para que la alerta de error desaparezca solo cuando el usuario
   ha cambiado por lo menos un valor en el campo del email o contraseña*/ 
     const cambioEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);      // Cuando hay  un cambio en el input de correo...
@@ -98,17 +92,11 @@ export default function Formulario() {
     <>
       <form onSubmit={handleLogin}>
         {alertaAcceso && (
-          <div className={`mb-4 p-4 rounded-lg shadow-lg flex items-center gap-2 ${
-            'bg-red-500'
-          } text-white`}>
-            <span>{alertaAcceso.mensaje}</span>
-            <button 
-              onClick={() => setAlertaAcceso(null)}
-              className="ml-2 hover:text-gray-200"
-            >
-              <X size={16} />
-            </button>
-          </div>
+          <Alerta
+          tipo={alertaAcceso.type}
+          mensaje={alertaAcceso.mensaje}
+          funCerrar={() => setAlertaAcceso(null)}
+          />
         )}
 
         <div className="mb-4">
@@ -125,33 +113,12 @@ export default function Formulario() {
             required
           />
         </div>
-        <div className="mb-4 relative"> 
-          <input
-            type={mostrarContraseña ? "text" : "password"}
-            className={`w-full p-2 border rounded-lg mt-1 bg-[#fafbfc] ${
-              alertaAcceso 
-                ? 'border-red-400 text-red-600 placeholder-red-400' 
-                : 'border-gray-300 text-black'
-            }`}
-            placeholder="Contraseña"
-            value={password}
-            onChange={cambioContrasena}
-            required
-          />
-          {password.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowPassword(!mostrarContraseña)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
-              {mostrarContraseña ? (
-                <EyeOff size={20} />
-              ) : (
-                <Eye size={20} />
-              )}
-            </button>
-          )}
-        </div>
+
+        <CampoContrasena
+        value={password}
+        onChange={cambioContrasena}
+        error={!!alertaAcceso}
+      />
         <div>
           <button
             type="submit"
