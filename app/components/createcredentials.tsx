@@ -1,4 +1,4 @@
-'use client';
+"use client"
 
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -26,7 +26,7 @@ export default function CreateCredentials() {
       // Crear el usuario en Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, mail, password);
       const uid = userCredential.user.uid;
-      
+
       // Preparamos los datos para guardar en la Realtime Database.
       // NOTA: No se almacena la contraseña en la base de datos, ya que Firebase Auth se encarga de ello.
       const data = {
@@ -49,7 +49,6 @@ export default function CreateCredentials() {
   };
 
   return (
-    <html>
     <div className=" flex items-center justify-center w-full h-full">
       <div className="w-full max-w-sm flex flex-col p-8 bg-white rounded-xl shadow-md border border-gray-300">
         <h1 className="text-black">Nombre</h1>
@@ -94,7 +93,7 @@ export default function CreateCredentials() {
               onChange={(event) => setRole(event.target.value)}
             />
           </div>
-          <div className="flex-row flex"> 
+          <div className="flex-row flex">
             <p className="text-black pl-8 pr-2">RH</p>
             <input
               type="checkbox"
@@ -113,6 +112,5 @@ export default function CreateCredentials() {
         </button>
       </div>
     </div>
-    </html>
   );
 }

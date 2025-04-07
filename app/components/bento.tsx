@@ -5,7 +5,7 @@ export default function Bento () {
     return(
 
         <div className="md:grid md:grid-cols-3 md:grid-rows-3 gap-4 w-full h-full flex flex-col">
-            <div className="bg-white rounded-xl border-gray-300 border justify-center flex flex-col p-15 hover:scale-105 shadow-md transition-transform transform">
+            <div className="bg-white rounded-xl justify-center flex flex-col p-15 hover:scale-105 shadow-md transition-transform transform">
                 <div className="bg-[#f4a261] rounded-4xl p-4 w-14">
                     <Users/>
                 </div>

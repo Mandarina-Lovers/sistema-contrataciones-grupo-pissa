@@ -1,29 +1,18 @@
 import "../globals.css";
 import SideNav from "../components/sidenav";
-import { urbanist } from '@/app/components/fonts';
-
-const nombres: string[] = ["Andy", "Daniel", "Dael", "Esteban", "Gabriel", "Steph"];
-const usuario: string = nombres[Math.floor(Math.random() * nombres.length)];
-
-const obtenerSaludo = (): string => {
-  const hora = new Date().getHours();
-
-  if (hora >= 6 && hora < 12) return "Buenos días";
-  if (hora >= 12 && hora < 19) return "Buenas tardes";
-  return "Buenas noches";
-
-};
+import SideNavPhone from "../components/sidenav-phone";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
-      <div className="w-full flex-none md:w-64 pl-2 bg-gray-50">
+    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden bg-white">
+      <div className="w-full flex-none md:w-64 pl-2 bg-gray-50 md:block hidden">
         <SideNav/>
       </div>
-      <div className="flex-grow p-6 md:overflow-y-auto md:p-12 bg-gray-50">
-        <h2 className={`${urbanist.className} text-2xl pl-8 text-[#495057]`}>Hola {usuario}.</h2>
-        <h1 className={`${urbanist.className} text-3xl text-[#212529] pl-8`}><strong>{obtenerSaludo()}</strong></h1>
+      <div className="flex-grow md:overflow-y-auto p-6 md:p-12 bg-gray-50 overflow-x-auto pb-24 md:pb-0">
         {children}
+      </div>
+      <div className="h-20 w-full fixed bottom-0 bg-gray-50 md:hidden block p-2">
+        <SideNavPhone/>
       </div>
     </div>
   );

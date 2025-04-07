@@ -1,44 +1,25 @@
-"use client";
+import Bento from "@/app/components/bento";
+import { urbanist } from "@/app/components/fonts";
 
-import { useState } from "react";
-import { LayoutGrid, Table2 } from "lucide-react";
-import ListUsers from "../components/listusers";
-import TablaUsuarios from "../components/tabla-usuarios";
-import { urbanist } from "../components/fonts";
+const nombres: string[] = ["Andy", "Daniel", "Dael", "Esteban", "Gabriel", "Steph"];
+const usuario: string = nombres[Math.floor(Math.random() * nombres.length)];
 
-export default function VistaUsuarios() {
-  const [vistaTabla, setVistaTabla] = useState(false);
+const obtenerSaludo = (): string => {
+  const hora = new Date().getHours();
 
-  return (
-    <div className="flex-1 overflow-y-auto p-4 mt-16 md:mt-0">
-      <h2 className={`text-xl font-semibold text-black mb-4 pl-4 ${urbanist.className}`}>Candidatos</h2>
+  if (hora >= 6 && hora < 12) return "Buenos días";
+  if (hora >= 12 && hora < 19) return "Buenas tardes";
+  return "Buenas noches";
 
-      <div className="md:flex hidden">
-        <div className="pr-2">
-          <button
-            onClick={() => setVistaTabla(false)}
-            className={`p-2 ${!vistaTabla ? "hidden" : "block"}`}
-          >
-            <LayoutGrid className="stroke-[#495057]" />
-          </button>
-        </div>
+};
+
+export default function Inicio () {
+    return(
         <div>
-          <button
-            onClick={() => setVistaTabla(true)}
-            className={`p-2 ${vistaTabla ? "hidden" : "block"}`}
-          >
-            <Table2 className="stroke-[#495057]" />
-          </button>
+            <h2 className={`${urbanist.className} text-2xl pl-8 text-[#495057]`}>Hola {usuario}.</h2>
+            <h1 className={`${urbanist.className} text-3xl text-[#212529] pl-8`}><strong>{obtenerSaludo()}</strong></h1>
+            <div className="flex h-full w-full p-8 "><Bento/></div>
         </div>
-      </div>
-
-      {/* Contenido */}
-      <div className={vistaTabla ? "md:hidden" : "block"}>
-        <ListUsers />
-      </div>
-      <div className={vistaTabla ? "md:block" : "hidden"}>
-        <TablaUsuarios />
-      </div>
-    </div>
-  );
+        
+    )
 }

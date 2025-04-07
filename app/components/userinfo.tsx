@@ -4,6 +4,7 @@ import { useRouter, usePathname, useSearchParams} from "next/navigation";
 import {database} from "../../firebaseConfig"
 import {ref, get, set} from "firebase/database"
 import path from "path";
+import ProfilePicture from "./profile-picture";
 
 
 
