@@ -49,17 +49,11 @@ export default function CreateCredentials() {
   };
 
   return (
-<<<<<<< Updated upstream
     <html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <div className=" min-h-screen flex items-center ml-60 w-200 md:ml-60 md:w-100">
       <div className="w-full max-w-sm flex flex-col text-center p-4 bg-white rounded-lg shadow-md">
         <h1 className="text-black text-lg font-semibold">Nombre</h1>
-=======
-    <div className=" flex items-center justify-center w-full h-full">
-      <div className="w-full max-w-sm flex flex-col p-8 bg-white rounded-xl shadow-md border border-gray-300">
-        <h1 className="text-black">Nombre</h1>
->>>>>>> Stashed changes
         <input
           type="text"
           className="text-black border border-gray-300 bg-[#fafbfc] rounded-lg p-2 w-full"
