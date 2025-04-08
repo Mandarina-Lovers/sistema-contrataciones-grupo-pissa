@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
 
-  if(request.nextUrl.pathname === "/auth/redirector") {
   // 1. Leer cookie "candidateId"
     const userId = request.cookies.get("candidateId");
 
     if (!userId) {
       // Si no hay cookie, redirigir al inicio
-      return NextResponse.redirect(new URL("/blocked", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     // 2. Validar al usuario desde /api/checkUser
@@ -22,7 +21,7 @@ export async function middleware(request: NextRequest) {
 
     if (!checkUserRes.ok) {
       // Algo salió mal, redirige al inicio
-      return NextResponse.redirect(new URL("/blocked", request.url));
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     const { blocked, role } = await checkUserRes.json();
@@ -31,17 +30,17 @@ export async function middleware(request: NextRequest) {
     if (blocked) {
       return NextResponse.redirect(new URL("/blocked", request.url));
     }
-
+    
     if (role === "candidato") {
       return NextResponse.redirect(new URL("/dashboard-candidato/expediente", request.url));
     }
     if (role === "rh") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
+
 
     // Si no está bloqueado y ya está en la ruta correcta, permitir
-    return NextResponse.redirect(new URL("/blocked", request.url));
   }
+  return NextResponse.next();
 }
 
 // Ajusta las rutas que deseas proteger
@@ -51,7 +50,6 @@ export const config = {
     "/dashboard/:path*",
     "/dashboard-candidato",
     "/dashboard-candidato/:path*",
-    "/blocked",
     "/auth/redirector"
   ],
 };
