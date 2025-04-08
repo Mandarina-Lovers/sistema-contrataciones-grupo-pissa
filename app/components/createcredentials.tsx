@@ -8,7 +8,8 @@ import { database, auth } from "../../firebaseConfig";
 import crypto from "crypto";
 
 const generatePassword = (length:any = 16) => {
-    return crypto.randomBytes(length).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, length);
+  //return crypto.randomBytes(length).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, length);
+  return "estebanlachupa"
 }
 
 export default function CreateCredentials() {
