@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const cookieStore = await cookies();
   cookieStore.set("candidateId", uid, {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 60 * 60 * 24, // 1 día
     path: "/",
