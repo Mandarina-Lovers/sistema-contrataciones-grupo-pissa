@@ -1,5 +1,4 @@
-import ListInformation from '@/app/components/userinfo'
-import Usuarios from '@/app/components/usuario';
+import Usuarios from '@/app/components/userinfo'
 
 export default function UserInformation() {
 

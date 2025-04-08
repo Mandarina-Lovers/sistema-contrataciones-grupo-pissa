@@ -5,7 +5,7 @@ import {database} from "../../firebaseConfig"
 import {ref, get, set} from "firebase/database"
 import path from "path";
 import ProfilePicture from "./profile-picture";
-
+import { CircleCheck, CircleUser, Lock, LockOpen, Mail, Phone, UserMinus, UserPlus } from "lucide-react";
 
 
 interface User {
@@ -17,7 +17,7 @@ interface User {
   telefono?: string;
 }
 
-export default function ListInformation() {
+export default function Usuarios() {
   const router = useRouter();
   const pathname = usePathname();
   const searchparams = useSearchParams();
@@ -30,22 +30,46 @@ export default function ListInformation() {
   const id =  pathname.split("/")[2];
 
 
+  const handleRemoval = async () => {
+
+    //console.log("something is happening")
+    await set(ref(database, `usuarios/${id}/estadoUsuario`), "dado de baja").then(() => {
+
+      setStatus("dado de baja");
+    })
+  
+    
+  }
+
   const handleBlock = async () => {
 
+    if (status != "dado de baja") {
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "bloqueado").then(() => {
 
       setStatus("bloqueado");
     })
-    
+  }
+  else {
+    alert("No se puede bloquear un usuario que ya esta dado de baja.");
+  }
+
   }
 
   const handleUnblock = async () => {
 
+
+    if (status != "dado de baja") {
+    
+      
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "normal").then(() => {
 
       setStatus("normal");
     })
 
+  }
+  else {
+    alert("No se puede desbloquear un usuario que esta dado de baja.")
+  }
   }
 
   useEffect(() => {
@@ -75,33 +99,63 @@ export default function ListInformation() {
       }
       fetchUser();
       }, []);
-    
-  
-  
-
   
   return (
-    <div className="flex flex-col items-center p-6 min-h-screen w-300">
-      <h1 className="text-4xl font-extrabold text-black mb-6">User Information</h1>
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-96 text-center transform transition duration-500 hover:scale-105">
-        <img
-          src="https://via.placeholder.com/150"
-          alt="Profile"
-          className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-md"
-        />
-        <h2 className="text-2xl font-bold text-gray-800">{name + " " + lastname}</h2>
-        <p className="text-gray-600 text-sm">{role}</p>
-        <p className="mt-4 text-gray-700 text-md italic">{mail}</p>
-        <p className="mt-4 text-gray-700 text-md italic">{phone}</p>
-        <p className="mt-4 text-gray-700 text-md italic">{status}</p>
+    <div>
+      <div className="flex flex-col md:flex-row items-center border-b border-gray-300 pb-6">
+        <ProfilePicture nombre={`${name}`} width={"w-15"} height={"h-15"} textSize={"text-3xl"}/>
+        <span className="pl-4">
+          <div>
+            <div className="flex flex-row items-center">
+              <strong className="className={`${urbanist.className} text-2xl text-[#212529]`}">{name} {lastname}</strong>
+              <div className="flex flex-row pl-2 items-center">
+                {status === "normal" && (
+                  <div className="flex flex-row items-center px-2 py-0.5 bg-green-100 rounded">
+                    <CircleCheck className="size-4 text-green-800" />
+                    <p className="pl-1 text-green-800 capitalize text-xs">Normal</p>
+                  </div>
+                )}
+                {status === "bloqueado" && (
+                  <div className="flex flex-row items-center px-2 py-0.5 bg-red-100 rounded">
+                    <Lock className="size-4 text-red-800" />
+                    <p className="pl-1 text-red-800 capitalize text-xs">Bloqueado</p>
+                  </div>
+                )}
+                {status === "dado de baja" && (
+                  <div className="flex flex-row items-center px-2 py-0.5 bg-red-100 rounded">
+                    <Lock className="size-4 text-red-800" />
+                    <p className="pl-1 text-red-800 capitalize text-xs">Dado de baja</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <p className="text-[#2975a0]">{role}</p>
+          </div>
+        </span>
+        <div className="md:ml-auto">
+          <button className="font-bold border-2 py-2 px-4 rounded-lg hover:border-[#2d4583] hover:text-[#2d4583] transition mr-2 inline-flex"><UserPlus className="pr-2"/>Convertir en RH</button>
+          <button className="font-bold border-2 py-2 px-4 rounded-lg hover:border-[#08b177] hover:text-[#08b177] transition mr-2 inline-flex" onClick={handleUnblock}><LockOpen className="pr-2"/> Desbloquear</button>
+          <button className="font-bold border-2 py-2 px-4 rounded-lg hover:bg-red-600 hover:text-white transition mr-2 inline-flex" onClick={handleBlock}><Lock className="pr-2"/> Bloquear</button>
+          <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition inline-flex" onClick={handleRemoval}><UserMinus className="pr-2"/> Dar de baja</button>
+        </div>
       </div>
-      
-
-      <div className="mt-4 flex flex-row gap-5 w-200">
-        <button className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition">Convertir en RH</button>
-        <button className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition" onClick={handleUnblock}>Desbloquear</button>
-        <button className="w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition" onClick={handleBlock}>Bloquear</button>
-        <button className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">Dar de baja</button>
+      <div className="pt-6">
+        <table className="table-auto">
+          <tbody>
+            <tr>
+              <td className="inline-flex pr-8"><CircleUser className="pr-2"/> ID del Usuario</td>
+              <td>{id}</td>
+            </tr>
+            <tr>
+              <td className="inline-flex"><Mail className="pr-2"/> Correo</td>
+              <td>{mail}</td>
+            </tr>
+            <tr>
+              <td className="inline-flex"><Phone className="pr-2"/> Teléfono</td>
+              <td>{phone}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   );
