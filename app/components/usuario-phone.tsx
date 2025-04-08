@@ -8,8 +8,6 @@ import ProfilePicture from "./profile-picture";
 import { CircleCheck, Ellipsis, MoveLeft, Lock, CircleUser, Mail, Phone } from "lucide-react";
 import { urbanist } from "./fonts";
 
-
-
 interface User {
   id: string;
   nombre?: string;
@@ -19,7 +17,7 @@ interface User {
   telefono?: string;
 }
 
-export default function ListInformation() {
+export default function Usuarios() {
   const router = useRouter();
   const pathname = usePathname();
   const searchparams = useSearchParams();
@@ -32,22 +30,46 @@ export default function ListInformation() {
   const id =  pathname.split("/")[2];
 
 
+  const handleRemoval = async () => {
+
+    //console.log("something is happening")
+    await set(ref(database, `usuarios/${id}/estadoUsuario`), "dado de baja").then(() => {
+
+      setStatus("dado de baja");
+    })
+  
+    
+  }
+
   const handleBlock = async () => {
 
+    if (status != "dado de baja") {
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "bloqueado").then(() => {
 
       setStatus("bloqueado");
     })
-    
+  }
+  else {
+    alert("No se puede bloquear un usuario que ya esta dado de baja.");
+  }
+
   }
 
   const handleUnblock = async () => {
 
+
+    if (status != "dado de baja") {
+    
+      
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "normal").then(() => {
 
       setStatus("normal");
     })
 
+  }
+  else {
+    alert("No se puede desbloquear un usuario que esta dado de baja.")
+  }
   }
 
   useEffect(() => {
