@@ -38,7 +38,7 @@ const UserCard = ({ user }: { user: User }) => {
   );
 };
 
-export default function ListRecursos() {
+export default function ListEmpleados() {
   const [users, setUsers] = useState<User[]>([]);
   const [sortOption, setSortOption] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -69,13 +69,12 @@ export default function ListRecursos() {
 
   const filtrarUsuarios = users.filter((user) => {
     const buscar = searchTerm.toLowerCase();
-    const esRecursos = user.rol?.toUpperCase() === "RH";
   
-    return esRecursos && (
-      user.id?.toLowerCase().includes(buscar) ||
-      user.nombre?.toLowerCase().includes(buscar) ||
-      user.apellidos?.toLowerCase().includes(buscar) ||
-      user.email?.toLowerCase().includes(buscar)
+    return (
+        user.id?.toLowerCase().includes(buscar) ||
+        user.nombre?.toLowerCase().includes(buscar) ||
+        user.apellidos?.toLowerCase().includes(buscar) ||
+        user.email?.toLowerCase().includes(buscar)
     );
   });
 

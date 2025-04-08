@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // 1. Leer cookie "candidateId" (httpOnly, accesible desde el servidor)
+ {/*} // 1. Leer cookie "candidateId" (httpOnly, accesible desde el servidor)
   const userId = request.cookies.get("candidateId");
 
   if (!userId) {
@@ -40,5 +40,5 @@ export const config = {
     "/dashboard/:path*",
     "/expediente-candidatos",
     "/expediente-candidatos/:path*"
-  ],
+  ],*/}
 };

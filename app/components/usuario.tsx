@@ -6,6 +6,7 @@ import {ref, get, set} from "firebase/database"
 import path from "path";
 import ProfilePicture from "./profile-picture";
 import { CircleCheck, CircleUser, Lock, LockOpen, Mail, Phone, UserMinus, UserPlus } from "lucide-react";
+import { urbanist } from "./fonts";
 
 
 interface User {
@@ -83,7 +84,7 @@ export default function Usuarios() {
         <span className="pl-4">
           <div>
             <div className="flex flex-row items-center">
-              <strong className="className={`${urbanist.className} text-2xl text-[#212529]`}">{name} {lastname}</strong>
+              <strong className={`${urbanist.className} text-2xl text-[#212529]`}>{name} {lastname}</strong>
               <div className="flex flex-row pl-2 items-center">
                 {status === "normal" && (
                   <div className="flex flex-row items-center px-2 py-0.5 bg-green-100 rounded">
@@ -103,9 +104,8 @@ export default function Usuarios() {
           </div>
         </span>
         <div className="md:ml-auto">
-          <button className="font-bold border-2 py-2 px-4 rounded-lg hover:border-[#2d4583] hover:text-[#2d4583] transition mr-2 inline-flex"><UserPlus className="pr-2"/>Convertir en RH</button>
-          <button className="font-bold border-2 py-2 px-4 rounded-lg hover:border-[#08b177] hover:text-[#08b177] transition mr-2 inline-flex" onClick={handleUnblock}><LockOpen className="pr-2"/> Desbloquear</button>
-          <button className="font-bold border-2 py-2 px-4 rounded-lg hover:bg-red-600 hover:text-white transition mr-2 inline-flex" onClick={handleBlock}><Lock className="pr-2"/> Bloquear</button>
+          <button className="border-2 border-gray-400 text-[#212529] py-2 px-4 rounded-lg mr-2 inline-flex" onClick={handleUnblock}><LockOpen className="pr-2"/> Desbloquear</button>
+          <button className="border-2 border-gray-400 text-[#212529] py-2 px-4 rounded-lg mr-2 inline-flex" onClick={handleBlock}><Lock className="pr-2"/> Bloquear</button>
           <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition inline-flex"><UserMinus className="pr-2"/> Dar de baja</button>
         </div>
       </div>
@@ -113,7 +113,7 @@ export default function Usuarios() {
         <table className="table-auto">
           <tbody>
             <tr>
-              <td className="inline-flex pr-8"><CircleUser className="pr-2"/> ID del Usuario</td>
+              <td className="inline-flex pr-8"><CircleUser className="pr-2"/>ID del Usuario</td>
               <td>{id}</td>
             </tr>
             <tr>
