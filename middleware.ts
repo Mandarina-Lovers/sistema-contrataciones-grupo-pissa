@@ -38,7 +38,7 @@ export const config = {
   matcher: [
     "/dashboard",
     "/dashboard/:path*",
-    "/expediente-candidatos",
-    "/expediente-candidatos/:path*"
+    //"/expediente-candidatos",
+    //"/expediente-candidatos/:path*"
   ],
 };
