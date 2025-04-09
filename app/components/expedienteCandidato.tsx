@@ -1,10 +1,9 @@
 'use client'
 
 import {useState, useEffect} from 'react';
-import {ChevronDown, ChevronUp, Check, X, Clock} from 'lucide-react';
+import {ChevronDown, ChevronUp, Check, X, Clock, ThumbsUp, ThumbsDown} from 'lucide-react';
 import {set, ref, get, update} from 'firebase/database';
 import {database} from '@/firebaseConfig';
-import Uploader from "@/app/components/Uploader";
 import ManagerViewer from "@/app/components/ManagerViewer";
 
 interface ExpedienteCandidatoProps
@@ -16,11 +15,18 @@ interface ExpedienteCandidatoProps
 // Definición de tipos
 type DocumentState = 'approved' | 'reviewing' | 'rejected' | 'not_uploaded';
 
+interface FieldState
+{
+    value: string;
+    state: 'aprobado' | 'rechazado' | 'pendiente_de_revisar' | 'no_subido';
+}
+
 interface ManualField
 {
     key: string;
     value: string;
     label: string;
+    state: DocumentState; // Usaremos el mismo tipo DocumentState 
 }
 
 interface DocumentFields
@@ -33,9 +39,11 @@ interface Document
 {
     id: number;
     name: string;
-    state: DocumentState;
+    fileState: DocumentState;
+    fieldsState: DocumentState;
+    generalState: DocumentState;
     file: string | null;
-    fields: DocumentFields;
+    fields: ManualField[];
 }
 
 // Constantes de estados
@@ -230,18 +238,20 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                 const expedienteData = expedienteSnapshot.val();
                 const docsArray: Document[] = Object.entries(expedienteData).map(([docName, docData]: [string, any], index) =>
                 {
-                    // Convertir campos de la BD en un array de campos
+                    // Campos array para el documento
                     const fieldsArray: ManualField[] = [];
 
                     if (docData.campos && typeof docData.campos === 'object')
                     {
-                        // Crear campos basados en lo que hay en la BD
-                        Object.entries(docData.campos).forEach(([key, value]) =>
+                        Object.entries(docData.campos).forEach(([key, fieldData]) =>
                         {
                             fieldsArray.push({
                                 key,
-                                value: value as string,
-                                label: formatFieldName(key) // Función para formatear el nombre
+                                value: typeof fieldData === 'object' && fieldData !== null ? (fieldData as {valor: string}).valor : fieldData as string,
+                                state: typeof fieldData === 'object' && fieldData !== null && 'estado' in fieldData
+                                    ? mapDbStateToComponentState((fieldData as {estado: string}).estado)
+                                    : DOCUMENT_STATES.REVIEWING,
+                                label: formatFieldName(key)
                             });
                         });
                     } else
@@ -251,25 +261,25 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                         {
                             case 'ActaNacimiento':
                                 fieldsArray.push(
-                                    {key: 'fechaNacimiento', value: '', label: 'Fecha de Nacimiento'},
-                                    {key: 'lugarExpedicion', value: '', label: 'Lugar de Expedición'}
+                                    {key: 'fechaNacimiento', value: '', label: 'Fecha de Nacimiento', state: DOCUMENT_STATES.NOT_UPLOADED},
+                                    {key: 'lugarExpedicion', value: '', label: 'Lugar de Expedición', state: DOCUMENT_STATES.NOT_UPLOADED}
                                 );
                                 break;
                             case 'CURP':
                                 fieldsArray.push(
-                                    {key: 'curpNumero', value: '', label: 'Número de CURP'}
+                                    {key: 'curpNumero', value: '', label: 'Número de CURP', state: DOCUMENT_STATES.NOT_UPLOADED}
                                 );
                                 break;
                             case 'INE':
                                 fieldsArray.push(
-                                    {key: 'claveElector', value: '', label: 'Clave de Elector'},
-                                    {key: 'emision', value: '', label: 'Fecha de Emisión'}
+                                    {key: 'claveElector', value: '', label: 'Clave de Elector', state: DOCUMENT_STATES.NOT_UPLOADED},
+                                    {key: 'emision', value: '', label: 'Fecha de Emisión', state: DOCUMENT_STATES.NOT_UPLOADED}
                                 );
                                 break;
                             case 'CV':
                                 fieldsArray.push(
-                                    {key: 'experiencia', value: '', label: 'Años de Experiencia'},
-                                    {key: 'educacion', value: '', label: 'Educación'}
+                                    {key: 'experiencia', value: '', label: 'Años de Experiencia', state: DOCUMENT_STATES.NOT_UPLOADED},
+                                    {key: 'educacion', value: '', label: 'Educación', state: DOCUMENT_STATES.NOT_UPLOADED}
                                 );
                                 break;
                         }
@@ -278,9 +288,11 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                     return {
                         id: index + 1,
                         name: docName,
-                        state: mapDbStateToComponentState(docData.estado),
+                        fileState: mapDbStateToComponentState(docData.estadoArchivo || docData.estado || 'no_subido'),
+                        fieldsState: mapDbStateToComponentState(docData.estadoCampos || docData.estado || 'no_subido'),
+                        generalState: mapDbStateToComponentState(docData.estadoGeneral || docData.estado || 'no_subido'),
                         file: docData.url ? extractFileNameFromUrl(docData.url) : null,
-                        fields: {fields: fieldsArray}
+                        fields: fieldsArray
                     };
                 });
 
@@ -338,7 +350,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
         setDocuments(prev =>
             prev.map(doc =>
                 doc.id === selectedDoc
-                    ? {...doc, file: fileName, state: DOCUMENT_STATES.REVIEWING}
+                    ? {...doc, file: fileName, generalState: DOCUMENT_STATES.REVIEWING}
                     : doc
             )
         );
@@ -352,7 +364,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
         // Actualizar el estado local
         setDocuments(documents.map(doc =>
             doc.id === selectedDoc
-                ? {...doc, file: null, state: DOCUMENT_STATES.NOT_UPLOADED}
+                ? {...doc, file: null, generalState: DOCUMENT_STATES.NOT_UPLOADED}
                 : doc
         ));
     };
@@ -365,15 +377,13 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
             if (doc.id === selectedDoc)
             {
                 // Copia el documento y actualiza el campo específico
-                const updatedFields = doc.fields.fields.map(field =>
+                const updatedFields = doc.fields.map(field =>
                     field.key === fieldKey ? {...field, value} : field
                 );
 
                 return {
                     ...doc,
-                    fields: {
-                        fields: updatedFields
-                    }
+                    fields: updatedFields
                 };
             }
             return doc;
@@ -388,7 +398,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
         // Crear un objeto con todos los campos para actualizar la base de datos
         const fieldsToSave: Record<string, string> = {};
 
-        currentDocument.fields.fields.forEach(field =>
+        currentDocument.fields.forEach(field =>
         {
             fieldsToSave[field.key] = field.value;
         });
@@ -409,6 +419,110 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
             });
     };
 
+    // Aprobar/Rechazar archivo
+    const handleFileReview = async (approved: boolean) =>
+    {
+        if (!expedienteId || !currentDocument) return;
+
+        const newState = approved ? 'aprobado' : 'rechazado';
+        const message = approved ? "¿Aprobar este archivo?" : "¿Rechazar este archivo?";
+
+        if (window.confirm(message))
+        {
+            // Actualizar estado local
+            setDocuments(documents.map(doc =>
+                doc.id === selectedDoc
+                    ? {
+                        ...doc,
+                        fileState: approved ? DOCUMENT_STATES.APPROVED : DOCUMENT_STATES.REJECTED,
+                        // Actualizar estado general
+                        generalState: doc.fieldsState === DOCUMENT_STATES.APPROVED && approved
+                            ? DOCUMENT_STATES.APPROVED
+                            : DOCUMENT_STATES.REJECTED
+                    }
+                    : doc
+            ));
+
+            // Actualizar base de datos
+            const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
+            update(docRef, {
+                estadoArchivo: newState,
+                estadoGeneral: currentDocument.fieldsState === DOCUMENT_STATES.APPROVED && approved
+                    ? 'aprobado'
+                    : 'rechazado'
+            });
+
+            alert(`Archivo ${approved ? "aprobado" : "rechazado"} exitosamente.`);
+        }
+    };
+
+    // Aprobar/Rechazar un campo específico
+    const handleFieldReview = async (fieldKey: string, approved: boolean) =>
+    {
+        if (!expedienteId || !currentDocument) return;
+
+        const newState = approved ? 'aprobado' : 'rechazado';
+
+        // Actualizar estado local del campo
+        const updatedFields = [...currentDocument.fields];
+        const fieldIndex = updatedFields.findIndex(f => f.key === fieldKey);
+        if (fieldIndex !== -1)
+        {
+            updatedFields[fieldIndex] = {
+                ...updatedFields[fieldIndex],
+                state: approved ? DOCUMENT_STATES.APPROVED : DOCUMENT_STATES.REJECTED
+            };
+        }
+
+        // Verificar si todos los campos están aprobados
+        const allFieldsApproved = updatedFields.every(field => field.state === DOCUMENT_STATES.APPROVED);
+        const newFieldsState = allFieldsApproved ? DOCUMENT_STATES.APPROVED : DOCUMENT_STATES.REJECTED;
+
+        // Actualizar documento en el estado
+        setDocuments(documents.map(doc =>
+            doc.id === selectedDoc
+                ? {
+                    ...doc,
+                    fields: updatedFields,
+                    fieldsState: newFieldsState,
+                    // Actualizar estado general
+                    generalState: newFieldsState === DOCUMENT_STATES.APPROVED && doc.fileState === DOCUMENT_STATES.APPROVED
+                        ? DOCUMENT_STATES.APPROVED
+                        : DOCUMENT_STATES.REJECTED
+                }
+                : doc
+        ));
+
+        // Actualizar base de datos
+        const fieldRef = ref(database,
+            `expedientes/${expedienteId}/documentos/${currentDocument.name}/campos/${fieldKey}`);
+
+        // Si es estructura antigua, actualizar a nueva estructura
+        const fieldSnapshot = await get(fieldRef);
+        if (fieldSnapshot.exists() && typeof fieldSnapshot.val() !== 'object')
+        {
+            const valor = fieldSnapshot.val();
+            set(fieldRef, {
+                valor: valor,
+                estado: newState
+            });
+        } else
+        {
+            update(fieldRef, {
+                estado: newState
+            });
+        }
+
+        // Actualizar estados generales
+        const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
+        update(docRef, {
+            estadoCampos: allFieldsApproved ? 'aprobado' : 'rechazado',
+            estadoGeneral: allFieldsApproved && currentDocument.fileState === DOCUMENT_STATES.APPROVED
+                ? 'aprobado'
+                : 'rechazado'
+        });
+    };
+
     // Encontrar el documento seleccionado
     const currentDocument = documents.find(doc => doc.id === selectedDoc);
 
@@ -423,98 +537,236 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
     }
 
     return (
-        <div className="flex w-full border border-gray-200 rounded-lg overflow-hidden">
-            {/* Panel izquierdo - Lista de documentos */}
-            <div className="w-1/2 bg-white p-4 border-r border-gray-200">
-                <div className="space-y-4">
-                    {documents.map((doc) => (
-                        <div
-                            key={doc.id}
-                            className="flex items-center space-x-3 cursor-pointer"
-                            onClick={() => setSelectedDoc(doc.id)}
-                        >
-                            <StateIcon state={doc.state} />
+        <>
+            <div className="flex w-full border border-gray-200 rounded-lg overflow-hidden">
+                {/* Panel izquierdo - Lista de documentos */}
+                <div className="w-1/2 bg-white p-4 border-r border-gray-200">
+                    <div className="space-y-4">
+                        {documents.map((doc) => (
+                            <div
+                                key={doc.id}
+                                className="flex items-center space-x-3 cursor-pointer"
+                                onClick={() => setSelectedDoc(doc.id)}
+                            >
+                                <StateIcon state={doc.generalState} />
 
-                            <div className="flex-1 h-1 bg-gray-200 relative">
-                                <div
-                                    className={`absolute top-0 left-0 h-full ${doc.state === DOCUMENT_STATES.APPROVED
-                                        ? 'bg-green-500'
-                                        : doc.state === DOCUMENT_STATES.PENDING
-                                            ? 'bg-orange-500'
-                                            : doc.state === DOCUMENT_STATES.REVIEWING
+                                <div className="flex-1 h-1 bg-gray-200 relative">
+                                    <div
+                                        className={`absolute top-0 left-0 h-full ${doc.generalState === DOCUMENT_STATES.APPROVED
+                                            ? 'bg-green-500'
+                                            : doc.generalState === DOCUMENT_STATES.REVIEWING
                                                 ? 'bg-yellow-500'
-                                                : doc.state === DOCUMENT_STATES.REJECTED
+                                                : doc.generalState === DOCUMENT_STATES.REJECTED
                                                     ? 'bg-red-500'
                                                     : 'bg-gray-300'
-                                        }`}
-                                    style={{width: '100%'}}
-                                />
-                            </div>
-
-                            <span className="font-medium w-48">{doc.name}</span>
-
-                            {/* Indicador de selección */}
-                            {selectedDoc === doc.id ? (
-                                <ChevronUp className="text-blue-800" />
-                            ) : (
-                                <ChevronDown className="text-blue-800" />
-                            )}
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Panel derecho - Gestión del documento seleccionado */}
-            <div className="w-1/2 bg-gray-50 p-4">
-                {currentDocument && (
-                    <>
-                        <div className="text-center mb-8">
-                            <h3 className="font-medium text-lg mb-2">
-                                {currentDocument.file
-                                    ? "Documento cargado por el candidato:"
-                                    : "El candidato aún no ha subido este documento"}
-                            </h3>
-
-                            {currentDocument.file ? (
-                                <ManagerViewer
-                                    expedienteId={expedienteId || undefined}
-                                    documentoId={currentDocument.name}
-                                    fileName={currentDocument.file}
-                                    folder="pruebaInicial"
-                                    onFileDeleted={handleDeleteFile}
-                                    userRole="RH"
-                                />
-                            ) : (
-                                <div className="bg-gray-900 text-white p-8 rounded-lg inline-block mb-2">
-                                    <X size={32} />
+                                            }`}
+                                        style={{width: '100%'}}
+                                    />
                                 </div>
-                            )}
-                        </div>
 
-                        <div className="mt-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-medium">
-                                    Datos ingresados manualmente del documento {currentDocument.name}
-                                </h3>
+                                <span className="font-medium w-48">{doc.name}</span>
+
+                                {/* Indicador de selección */}
+                                {selectedDoc === doc.id ? (
+                                    <ChevronUp className="text-blue-800" />
+                                ) : (
+                                    <ChevronDown className="text-blue-800" />
+                                )}
                             </div>
-                            <div className="space-y-3">
-                                {currentDocument.fields.fields.map((field) => (
-                                    <div key={field.key} className="flex flex-col">
-                                        <label htmlFor={field.key} className="text-sm font-medium text-gray-700 mb-1">
-                                            {field.label}
-                                        </label>
-                                        <input
-                                            id={field.key}
-                                            type="text"
-                                            className="w-full p-2 border border-gray-300 rounded"
-                                            placeholder={field.label}
-                                            value={field.value}
-                                            readOnly
-                                        />
+                        ))}
+                    </div>
+                </div>
+                {/* Panel derecho - Gestión del documento seleccionado */}
+                <div className="w-1/2 bg-gray-50 p-4 overflow-y-auto" style={{maxHeight: "90vh"}}>
+                    {currentDocument && (
+                        <>
+                            {/* Estado general del documento */}
+                            <div className="mb-4 p-3 rounded-lg shadow-sm bg-white">
+                                <h2 className="text-lg font-bold mb-2">Estado del documento: {currentDocument.name}</h2>
+                                <div className={`p-2 rounded-md text-center font-medium ${currentDocument.generalState === DOCUMENT_STATES.APPROVED
+                                        ? 'bg-green-100 text-green-800'
+                                        : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : currentDocument.generalState === DOCUMENT_STATES.REJECTED
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {currentDocument.generalState === DOCUMENT_STATES.APPROVED
+                                        ? '✓ Documento aprobado'
+                                        : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
+                                            ? '⟳ Pendiente de revisión'
+                                            : currentDocument.generalState === DOCUMENT_STATES.REJECTED
+                                                ? '✗ Documento rechazado'
+                                                : '✗ Documento no subido'}
+                                </div>
+                            </div>
+
+                            {/* Visualización del archivo */}
+                            <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+                                <h3 className="font-medium text-lg mb-3">
+                                    <div className="flex items-center justify-between">
+                                        <span>Documento PDF</span>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentDocument.fileState === DOCUMENT_STATES.APPROVED
+                                                ? 'bg-green-100 text-green-800'
+                                                : currentDocument.fileState === DOCUMENT_STATES.REVIEWING
+                                                    ? 'bg-yellow-100 text-yellow-800'
+                                                    : currentDocument.fileState === DOCUMENT_STATES.REJECTED
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : 'bg-gray-100 text-gray-800'
+                                            }`}>
+                                            {currentDocument.fileState === DOCUMENT_STATES.APPROVED
+                                                ? 'Aprobado'
+                                                : currentDocument.fileState === DOCUMENT_STATES.REVIEWING
+                                                    ? 'Pendiente'
+                                                    : currentDocument.fileState === DOCUMENT_STATES.REJECTED
+                                                        ? 'Rechazado'
+                                                        : 'No subido'}
+                                        </span>
                                     </div>
-                                ))}
+                                </h3>
+
+                                {currentDocument.file ? (
+                                    <div>
+                                        <ManagerViewer
+                                            expedienteId={expedienteId || undefined}
+                                            documentoId={currentDocument.name}
+                                            fileName={currentDocument.file}
+                                            folder="pruebaInicial"
+                                            onFileDeleted={handleDeleteFile}
+                                            userRole="RH"
+                                        />
+
+                                        {/* Botones de revisión del archivo */}
+                                        <div className="mt-4 pt-3 border-t border-gray-200">
+                                            <h4 className="font-medium mb-2">Revisión del archivo PDF:</h4>
+                                            <div className="flex space-x-3">
+                                                <button
+                                                    onClick={() => handleFileReview(true)}
+                                                    className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.APPROVED
+                                                            ? 'bg-green-200 text-green-800'
+                                                            : 'bg-green-600 text-white hover:bg-green-700'
+                                                        }`}
+                                                >
+                                                    <ThumbsUp size={16} className="mr-2" />
+                                                    {currentDocument.fileState === DOCUMENT_STATES.APPROVED ? 'Aprobado' : 'Aprobar'}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleFileReview(false)}
+                                                    className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.REJECTED
+                                                            ? 'bg-red-200 text-red-800'
+                                                            : 'bg-red-600 text-white hover:bg-red-700'
+                                                        }`}
+                                                >
+                                                    <ThumbsDown size={16} className="mr-2" />
+                                                    {currentDocument.fileState === DOCUMENT_STATES.REJECTED ? 'Rechazado' : 'Rechazar'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                        <X size={32} className="mx-auto text-gray-400 mb-2" />
+                                        <p className="text-gray-500">El candidato aún no ha subido este documento</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
+
+                            {/* Campos del documento */}
+                            <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
+                                <div className="flex justify-between items-center mb-3">
+                                    <h3 className="font-medium text-lg">Datos del documento</h3>
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentDocument.fieldsState === DOCUMENT_STATES.APPROVED
+                                            ? 'bg-green-100 text-green-800'
+                                            : currentDocument.fieldsState === DOCUMENT_STATES.REVIEWING
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : currentDocument.fieldsState === DOCUMENT_STATES.REJECTED
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-gray-100 text-gray-800'
+                                        }`}>
+                                        {currentDocument.fieldsState === DOCUMENT_STATES.APPROVED
+                                            ? 'Campos aprobados'
+                                            : currentDocument.fieldsState === DOCUMENT_STATES.REVIEWING
+                                                ? 'Campos pendientes'
+                                                : currentDocument.fieldsState === DOCUMENT_STATES.REJECTED
+                                                    ? 'Campos rechazados'
+                                                    : 'Sin datos'}
+                                    </span>
+                                </div>
+
+                                {currentDocument.fields.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {currentDocument.fields.map((field) => (
+                                            <div key={field.key} className="border border-gray-200 rounded-md p-3">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <label className="text-sm font-medium text-gray-700">
+                                                        {field.label}
+                                                    </label>
+                                                    <div className="flex space-x-1">
+                                                        <button
+                                                            onClick={() => handleFieldReview(field.key, true)}
+                                                            className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.APPROVED
+                                                                    ? 'bg-green-100 text-green-700'
+                                                                    : 'bg-gray-100 hover:bg-green-100 text-gray-700 hover:text-green-700'
+                                                                }`}
+                                                            title="Aprobar campo"
+                                                        >
+                                                            <ThumbsUp size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleFieldReview(field.key, false)}
+                                                            className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.REJECTED
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700'
+                                                                }`}
+                                                            title="Rechazar campo"
+                                                        >
+                                                            <ThumbsDown size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center">
+                                                    <input
+                                                        type="text"
+                                                        className={`w-full p-2 border rounded ${field.state === DOCUMENT_STATES.APPROVED
+                                                                ? 'border-green-300 bg-green-50'
+                                                                : field.state === DOCUMENT_STATES.REJECTED
+                                                                    ? 'border-red-300 bg-red-50'
+                                                                    : 'border-gray-300'
+                                                            }`}
+                                                        value={field.value}
+                                                        readOnly
+                                                    />
+                                                    <span className={`ml-2 p-1 rounded-full ${field.state === DOCUMENT_STATES.APPROVED
+                                                            ? 'bg-green-500'
+                                                            : field.state === DOCUMENT_STATES.REJECTED
+                                                                ? 'bg-red-500'
+                                                                : field.state === DOCUMENT_STATES.REVIEWING
+                                                                    ? 'bg-yellow-500'
+                                                                    : 'bg-gray-300'
+                                                        }`}>
+                                                        {field.state === DOCUMENT_STATES.APPROVED
+                                                            ? <Check size={12} className="text-white" />
+                                                            : field.state === DOCUMENT_STATES.REJECTED
+                                                                ? <X size={12} className="text-white" />
+                                                                : field.state === DOCUMENT_STATES.REVIEWING
+                                                                    ? <Clock size={12} className="text-white" />
+                                                                    : <X size={12} className="text-white" />
+                                                        }
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                                        <p className="text-gray-500">No hay datos disponibles para este documento</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Notas del documento */}
+                            <div className="p-4 bg-white rounded-lg shadow-sm">
                                 <h3 className="text-lg font-semibold mb-2">Notas del Candidato</h3>
                                 <textarea
                                     className="w-full p-2 border rounded-md"
@@ -530,11 +782,11 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                     Guardar Notas
                                 </button>
                             </div>
-                        </div>
-                    </>
-                )}
+                        </>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
