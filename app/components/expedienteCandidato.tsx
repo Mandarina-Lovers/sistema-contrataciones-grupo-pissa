@@ -523,6 +523,100 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
         });
     };
 
+    // Primero, agrega estas nuevas funciones al componente ExpedienteCandidato
+
+// Función para aprobar todo (archivo y campos)
+const handleApproveAll = async () => {
+    if (!expedienteId || !currentDocument) return;
+    
+    if (window.confirm("¿Estás seguro de que deseas APROBAR este documento y TODOS sus campos?")) {
+      try {
+        // 1. Actualizar estado local
+        const updatedFields = currentDocument.fields.map(field => ({
+          ...field,
+          state: DOCUMENT_STATES.APPROVED
+        }));
+        
+        setDocuments(documents.map(doc =>
+          doc.id === selectedDoc
+            ? {
+                ...doc,
+                fileState: DOCUMENT_STATES.APPROVED,
+                fieldsState: DOCUMENT_STATES.APPROVED,
+                generalState: DOCUMENT_STATES.APPROVED,
+                fields: updatedFields
+              }
+            : doc
+        ));
+        
+        // 2. Actualizar base de datos - estado general del documento
+        const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
+        await update(docRef, {
+          estadoArchivo: 'aprobado',
+          estadoCampos: 'aprobado',
+          estadoGeneral: 'aprobado'
+        });
+        
+        // 3. Actualizar cada campo en la base de datos
+        for (const field of currentDocument.fields) {
+          const fieldRef = ref(database, 
+            `expedientes/${expedienteId}/documentos/${currentDocument.name}/campos/${field.key}`);
+        }
+        
+        alert("✅ ¡Documento y todos sus campos aprobados exitosamente!");
+      } catch (error) {
+        console.error("Error al aprobar todo:", error);
+        alert("Ocurrió un error al intentar aprobar todo.");
+      }
+    }
+  };
+  
+  // Función para rechazar todo (archivo y campos)
+  const handleRejectAll = async () => {
+    if (!expedienteId || !currentDocument) return;
+    
+    if (window.confirm("¿Estás seguro de que deseas RECHAZAR este documento y TODOS sus campos?")) {
+      try {
+        // 1. Actualizar estado local
+        const updatedFields = currentDocument.fields.map(field => ({
+          ...field,
+          state: DOCUMENT_STATES.REJECTED
+        }));
+        
+        setDocuments(documents.map(doc =>
+          doc.id === selectedDoc
+            ? {
+                ...doc,
+                fileState: DOCUMENT_STATES.REJECTED,
+                fieldsState: DOCUMENT_STATES.REJECTED,
+                generalState: DOCUMENT_STATES.REJECTED,
+                fields: updatedFields
+              }
+            : doc
+        ));
+        
+        // 2. Actualizar base de datos - estado general del documento
+        const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
+        await update(docRef, {
+          estadoArchivo: 'rechazado',
+          estadoCampos: 'rechazado',
+          estadoGeneral: 'rechazado'
+        });
+        
+        // 3. Actualizar cada campo en la base de datos
+        for (const field of currentDocument.fields) {
+          const fieldRef = ref(database, 
+            `expedientes/${expedienteId}/documentos/${currentDocument.name}/campos/${field.key}`);
+        }
+        
+        alert("❌ Documento y todos sus campos han sido rechazados.");
+      } catch (error) {
+        console.error("Error al rechazar todo:", error);
+        alert("Ocurrió un error al intentar rechazar todo.");
+      }
+    }
+  };
+
     // Encontrar el documento seleccionado
     const currentDocument = documents.find(doc => doc.id === selectedDoc);
 
@@ -584,12 +678,12 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                             <div className="mb-4 p-3 rounded-lg shadow-sm bg-white">
                                 <h2 className="text-lg font-bold mb-2">Estado del documento: {currentDocument.name}</h2>
                                 <div className={`p-2 rounded-md text-center font-medium ${currentDocument.generalState === DOCUMENT_STATES.APPROVED
-                                        ? 'bg-green-100 text-green-800'
-                                        : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : currentDocument.generalState === DOCUMENT_STATES.REJECTED
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-gray-100 text-gray-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : currentDocument.generalState === DOCUMENT_STATES.REJECTED
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-gray-100 text-gray-800'
                                     }`}>
                                     {currentDocument.generalState === DOCUMENT_STATES.APPROVED
                                         ? '✓ Documento aprobado'
@@ -607,12 +701,12 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                     <div className="flex items-center justify-between">
                                         <span>Documento PDF</span>
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentDocument.fileState === DOCUMENT_STATES.APPROVED
-                                                ? 'bg-green-100 text-green-800'
-                                                : currentDocument.fileState === DOCUMENT_STATES.REVIEWING
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : currentDocument.fileState === DOCUMENT_STATES.REJECTED
-                                                        ? 'bg-red-100 text-red-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : currentDocument.fileState === DOCUMENT_STATES.REVIEWING
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : currentDocument.fileState === DOCUMENT_STATES.REJECTED
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                             }`}>
                                             {currentDocument.fileState === DOCUMENT_STATES.APPROVED
                                                 ? 'Aprobado'
@@ -643,8 +737,8 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                 <button
                                                     onClick={() => handleFileReview(true)}
                                                     className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.APPROVED
-                                                            ? 'bg-green-200 text-green-800'
-                                                            : 'bg-green-600 text-white hover:bg-green-700'
+                                                        ? 'bg-green-200 text-green-800'
+                                                        : 'bg-green-600 text-white hover:bg-green-700'
                                                         }`}
                                                 >
                                                     <ThumbsUp size={16} className="mr-2" />
@@ -654,8 +748,8 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                 <button
                                                     onClick={() => handleFileReview(false)}
                                                     className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.REJECTED
-                                                            ? 'bg-red-200 text-red-800'
-                                                            : 'bg-red-600 text-white hover:bg-red-700'
+                                                        ? 'bg-red-200 text-red-800'
+                                                        : 'bg-red-600 text-white hover:bg-red-700'
                                                         }`}
                                                 >
                                                     <ThumbsDown size={16} className="mr-2" />
@@ -677,12 +771,12 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                 <div className="flex justify-between items-center mb-3">
                                     <h3 className="font-medium text-lg">Datos del documento</h3>
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentDocument.fieldsState === DOCUMENT_STATES.APPROVED
-                                            ? 'bg-green-100 text-green-800'
-                                            : currentDocument.fieldsState === DOCUMENT_STATES.REVIEWING
-                                                ? 'bg-yellow-100 text-yellow-800'
-                                                : currentDocument.fieldsState === DOCUMENT_STATES.REJECTED
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-gray-100 text-gray-800'
+                                        ? 'bg-green-100 text-green-800'
+                                        : currentDocument.fieldsState === DOCUMENT_STATES.REVIEWING
+                                            ? 'bg-yellow-100 text-yellow-800'
+                                            : currentDocument.fieldsState === DOCUMENT_STATES.REJECTED
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-gray-100 text-gray-800'
                                         }`}>
                                         {currentDocument.fieldsState === DOCUMENT_STATES.APPROVED
                                             ? 'Campos aprobados'
@@ -706,8 +800,8 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                         <button
                                                             onClick={() => handleFieldReview(field.key, true)}
                                                             className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.APPROVED
-                                                                    ? 'bg-green-100 text-green-700'
-                                                                    : 'bg-gray-100 hover:bg-green-100 text-gray-700 hover:text-green-700'
+                                                                ? 'bg-green-100 text-green-700'
+                                                                : 'bg-gray-100 hover:bg-green-100 text-gray-700 hover:text-green-700'
                                                                 }`}
                                                             title="Aprobar campo"
                                                         >
@@ -716,8 +810,8 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                         <button
                                                             onClick={() => handleFieldReview(field.key, false)}
                                                             className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.REJECTED
-                                                                    ? 'bg-red-100 text-red-700'
-                                                                    : 'bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700'
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700'
                                                                 }`}
                                                             title="Rechazar campo"
                                                         >
@@ -729,21 +823,21 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                     <input
                                                         type="text"
                                                         className={`w-full p-2 border rounded ${field.state === DOCUMENT_STATES.APPROVED
-                                                                ? 'border-green-300 bg-green-50'
-                                                                : field.state === DOCUMENT_STATES.REJECTED
-                                                                    ? 'border-red-300 bg-red-50'
-                                                                    : 'border-gray-300'
+                                                            ? 'border-green-300 bg-green-50'
+                                                            : field.state === DOCUMENT_STATES.REJECTED
+                                                                ? 'border-red-300 bg-red-50'
+                                                                : 'border-gray-300'
                                                             }`}
                                                         value={field.value}
                                                         readOnly
                                                     />
                                                     <span className={`ml-2 p-1 rounded-full ${field.state === DOCUMENT_STATES.APPROVED
-                                                            ? 'bg-green-500'
-                                                            : field.state === DOCUMENT_STATES.REJECTED
-                                                                ? 'bg-red-500'
-                                                                : field.state === DOCUMENT_STATES.REVIEWING
-                                                                    ? 'bg-yellow-500'
-                                                                    : 'bg-gray-300'
+                                                        ? 'bg-green-500'
+                                                        : field.state === DOCUMENT_STATES.REJECTED
+                                                            ? 'bg-red-500'
+                                                            : field.state === DOCUMENT_STATES.REVIEWING
+                                                                ? 'bg-yellow-500'
+                                                                : 'bg-gray-300'
                                                         }`}>
                                                         {field.state === DOCUMENT_STATES.APPROVED
                                                             ? <Check size={12} className="text-white" />
@@ -780,6 +874,26 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                     className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
                                 >
                                     Guardar Notas
+                                </button>
+                                
+                            </div>
+                            {/* Botones para aprobar/rechazar todo */}
+                            <div className="mt-3 flex space-x-3 justify-start">
+                                <button
+                                    onClick={handleApproveAll}
+                                    className="flex items-center px-3 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
+                                    disabled={!currentDocument.file || currentDocument.fields.length === 0}
+                                >
+                                    <Check size={16} className="mr-2" />
+                                    Aprobar Todo
+                                </button>
+                                <button
+                                    onClick={handleRejectAll}
+                                    className="flex items-center px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                    disabled={!currentDocument.file || currentDocument.fields.length === 0}
+                                >
+                                    <X size={16} className="mr-2" />
+                                    Rechazar Todo
                                 </button>
                             </div>
                         </>
