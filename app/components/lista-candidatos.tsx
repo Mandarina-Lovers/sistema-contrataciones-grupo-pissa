@@ -47,25 +47,15 @@ export default function ListUsers() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const snapshot = await get(ref(database, "usuarios"));
-        if (!snapshot.exists()) return;
-
-        const dataValue = snapshot.val();
-        if (typeof dataValue !== "object" || dataValue === null) return;
-
-        const usersArray = Object.entries(dataValue).map(([id, value]) => ({
-          id,
-          ...(value as Omit<User, "id">),
-        }));
-
-        setUsers(usersArray);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+        const res = await fetch("/api/users");
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.error("Error al cargar usuarios", err);
       }
     };
-
     fetchUsers();
-  }, []);
+  }, []);  
 
   const filtrarUsuarios = users.filter((user) => {
     const buscar = searchTerm.toLowerCase();
