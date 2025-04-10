@@ -1,3 +1,19 @@
+/* DOCUMENTACIÓN - Pop-Up en la Pantalla
+
+CLASIFICACIÓN
+- aprobado: verde
+- denegado: rojo
+- errorSist: rojo oscuro
+- info: azul
+ 
+PROPIEDADES
+tipo: clasificación
+mensaje: ""
+cierreAuto: si se cierra automáticamente (tiempo) **OPCIONAL**
+tiempo: tiempo en ms para cerrar **OPCIONAL**
+funCerrar: funcion que se ejecuta al cerrar **OPCIONAL**
+*/
+
 "use client"
 
 import { useState } from 'react';

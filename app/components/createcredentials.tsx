@@ -1,3 +1,16 @@
+/* DOCUMENTACIÓN - Generación de credenciales
+
+Estados de los usuarios:
+
+* previo: cuando el candidato recién tiene credenciales y no ha generado su contraseña por primera vez
+* normal: usuario activo
+* bloqueado: cuando el usuario bloqueó su cuenta por 3 inicios de sesión incorrectos
+* enProceso: cuando se hizo la solicitud de recuperación de la cuenta
+* inhabilitado: cuando RH revoca los privilegios de acceso de la cuenta.
+* baja: Cuando el usuario fue bloqueado de manera permanente
+
+*/
+
 "use client";
 
 import React, { useState } from "react";
@@ -37,7 +50,7 @@ export default function CreateCredentials() {
       const data = {
         apellidos: lastname,
         email: mail,
-        estadoUsuario: "normal",
+        estadoUsuario: "previo", // Andy (10.04 5:10 p.m.) Nuevos Estados de Usuario 
         nombre: name,
         rol: role,
         telefono: phone,
