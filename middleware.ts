@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const { blocked, role } = await checkUserRes.json();
 
   if (blocked) {
-    return NextResponse.redirect(new URL("/blocked", request.url));
+    return NextResponse.redirect(new URL("/bloqueado", request.url));
   }
 
   // Redirect on /auth/redirector
