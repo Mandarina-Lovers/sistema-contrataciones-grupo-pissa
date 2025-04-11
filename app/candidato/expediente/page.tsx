@@ -20,7 +20,9 @@ interface ManualField
 interface DocumentFields
 {
   fields: ManualField[];
+  notas?: string;
 }
+
 
 interface Document
 {
@@ -91,6 +93,7 @@ const DocumentManager: React.FC = () =>
 {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<number>(1);
+  const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [expedienteId, setExpedienteId] = useState<string | null>(null);
@@ -144,6 +147,13 @@ const DocumentManager: React.FC = () =>
             {
               foundExpedienteId = id;
               setExpedienteId(id);
+
+              // Fetch notes if they exist
+              if ((data as any).notas)
+              {
+                setNotes((data as any).notas);
+              }
+
               break;
             }
           }
@@ -154,7 +164,8 @@ const DocumentManager: React.FC = () =>
           // Si no existe un expediente, lo creamos
           const newExpedienteRef = ref(database, 'expedientes/expediente' + Date.now());
           await update(newExpedienteRef, {
-            id_candidato: candidateIdFromCookie,
+            id_candidato: candidateId,
+            notas: "",
             documentos: {
               ActaNacimiento: {
                 estado: 'no_subido',
@@ -183,6 +194,19 @@ const DocumentManager: React.FC = () =>
           const newExpedienteSnapshot = await get(newExpedienteRef);
           foundExpedienteId = newExpedienteSnapshot.key;
           setExpedienteId(foundExpedienteId);
+          setNotes("");
+        } else
+        {
+          // If we found an expediente but haven't fetched the notes yet (rare case)
+          const expedienteNotasRef = ref(database, `expedientes/${foundExpedienteId}/notas`);
+          const notasSnapshot = await get(expedienteNotasRef);
+          if (notasSnapshot.exists())
+          {
+            setNotes(notasSnapshot.val());
+          } else
+          {
+            setNotes(""); // Set empty notes if not found
+          }
         }
 
         // 4. Obtener los datos del expediente
@@ -278,6 +302,12 @@ const DocumentManager: React.FC = () =>
   const getCandidateIdFromCookies = (): string | null =>
   {
     return "B7eXqDrAYVeHQ9dVAwb5hcAzd872"
+  };
+
+  // Handle notes textarea changes
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+  {
+    setNotes(e.target.value);
   };
 
   // Función auxiliar para extraer el nombre del archivo de una URL
@@ -481,6 +511,16 @@ const DocumentManager: React.FC = () =>
                 >
                   Guardar Datos
                 </button>
+              </div>
+              <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
+                <h3 className="text-lg font-semibold mb-2">Notas del Candidato</h3>
+                <textarea
+                  className="w-full p-2 border rounded-md"
+                  rows={4}
+                  value={notes}
+                  onChange={handleNotesChange}
+                  placeholder="Añadir notas sobre este candidato..."
+                />
               </div>
             </div>
           </>
