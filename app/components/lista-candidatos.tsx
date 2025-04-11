@@ -1,9 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { database } from "../../firebaseConfig";
-import { ref, get } from "firebase/database";
 import ProfilePicture from "./profile-picture";
 import { Mail, Phone, LayoutGrid, Table2 } from "lucide-react";
 import { urbanist } from "./fonts";
@@ -15,6 +11,7 @@ interface User {
   rol?: string;
   email?: string;
   telefono?: string;
+  status?: string;
 }
 
 const UserCard = ({ user }: { user: User }) => {
@@ -60,12 +57,15 @@ export default function ListUsers() {
   const filtrarUsuarios = users.filter((user) => {
     const buscar = searchTerm.toLowerCase();
     const esCandidato = user.rol?.toLowerCase() === "candidato";
+    const nombreCompleto = `${user.nombre || ""} ${user.apellidos || ""}`.toLocaleLowerCase();
   
     return esCandidato && (
       user.id?.toLowerCase().includes(buscar) ||
       user.nombre?.toLowerCase().includes(buscar) ||
       user.apellidos?.toLowerCase().includes(buscar) ||
-      user.email?.toLowerCase().includes(buscar)
+      user.email?.toLowerCase().includes(buscar) ||
+      user.telefono?.includes(buscar) ||
+      nombreCompleto.includes(buscar)
     );
   });
 

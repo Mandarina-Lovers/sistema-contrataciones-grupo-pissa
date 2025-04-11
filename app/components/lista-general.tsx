@@ -1,9 +1,5 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { database } from "../../firebaseConfig";
-import { ref, get } from "firebase/database";
 import ProfilePicture from "./profile-picture";
 import { Mail, Phone, LayoutGrid, Table2 } from "lucide-react";
 import { urbanist } from "./fonts";
@@ -58,13 +54,16 @@ export default function ListEmpleados() {
   }, []);
 
   const filtrarUsuarios = users.filter((user) => {
-    const buscar = searchTerm.toLowerCase();
+    const buscar = searchTerm.toLowerCase();  
+    const nombreCompleto = `${user.nombre || ""} ${user.apellidos || ""}`.toLocaleLowerCase();
   
     return (
         user.id?.toLowerCase().includes(buscar) ||
         user.nombre?.toLowerCase().includes(buscar) ||
         user.apellidos?.toLowerCase().includes(buscar) ||
-        user.email?.toLowerCase().includes(buscar)
+        user.email?.toLowerCase().includes(buscar) ||
+        user.telefono?.includes(buscar) ||
+        nombreCompleto.includes(buscar)
     );
   });
 

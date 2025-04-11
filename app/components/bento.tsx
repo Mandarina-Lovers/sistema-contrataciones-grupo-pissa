@@ -4,7 +4,7 @@ import CantCandidatos from "./cantidad-candidatos";
 
 export default function Bento () {
     return(        
-        <div className="grid grid-cols-4 grid-rows-5 gap-4 w-full h-full">
+        <div className="md:grid md:grid-cols-4 md:grid-rows-5 gap-4 w-full h-full flex flex-col">
             <div className="bg-white rounded-xl p-6 shadow-md flex flex-row justify-center items-center gap-8">
                 <div className="bg-[#f4a261] rounded-full p-4 text-white">
                     <Users/>
