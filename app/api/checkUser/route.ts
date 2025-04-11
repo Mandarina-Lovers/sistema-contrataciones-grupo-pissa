@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     const rol = data.rol;
 
     // 4. Evaluar si está bloqueado
-    const isBlocked = estadoUsuario === "bloqueado";
+    const isBlocked = (estadoUsuario === "bloqueado" || estadoUsuario === "dado de baja");
+    console.log(estadoUsuario);
 
     return NextResponse.json({ blocked: isBlocked, role: rol }, { status: 200 });
 

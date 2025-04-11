@@ -31,6 +31,8 @@ export default function CreateCredentials() {
   const [mail, setMail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("");
+  const [cand_disabled, setcand_disabled] = useState(false);
+  const [rh_disabled, setrh_disabled] = useState(false);
 
   const handlePress = async () => {
     // Generamos una contraseña (opcional: podrías permitir que el usuario defina la suya)
@@ -112,7 +114,8 @@ export default function CreateCredentials() {
               <input
                 type="checkbox"
                 value="candidato"
-                onChange={(event) => setRole(event.target.value)}
+                onChange={(event) => {setRole(event.target.value); setcand_disabled(false); setrh_disabled(!rh_disabled);}}
+                disabled={cand_disabled}
               />
             </div>
             <div className="flex-row flex">
@@ -120,7 +123,8 @@ export default function CreateCredentials() {
               <input
                 type="checkbox"
                 value="rh"
-                onChange={(event) => setRole(event.target.value)}
+                onChange={(event) => {setRole(event.target.value); setcand_disabled(!cand_disabled); setrh_disabled(false);}}
+                disabled={rh_disabled}
               />
             </div>
           </div>

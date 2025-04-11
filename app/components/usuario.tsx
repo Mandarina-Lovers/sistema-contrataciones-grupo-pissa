@@ -31,21 +31,46 @@ export default function Usuarios() {
   const id =  pathname.split("/")[2];
 
 
-  const handleBlock = async () => {
+  const handleRemoval = async () => {
 
+    await set(ref(database, `usuarios/${id}/estadoUsuario`), "dado de baja").then(() => {
+
+      setStatus("dado de baja");
+    })
+
+  }
+
+  const handleBlock = async () => {
+    
+    if (status != "dado de baja") {
+      
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "bloqueado").then(() => {
 
       setStatus("bloqueado");
     })
     
+    }
+
+    else {
+      alert("No se puede bloquear un usuario que ya esta dado de baja");
+    }
+
   }
 
   const handleUnblock = async () => {
 
-    await set(ref(database, `usuarios/${id}/estadoUsuario`), "normal").then(() => {
-
-      setStatus("normal");
-    })
+    if (status != "dado de baja") {
+      
+      await set(ref(database, `usuarios/${id}/estadoUsuario`), "normal").then(() => {
+  
+        setStatus("normal");
+      })
+      
+      }
+  
+      else {
+        alert("No se puede desbloquear un usuario que ya esta dado de baja");
+      }
 
   }
 
@@ -98,6 +123,12 @@ export default function Usuarios() {
                     <p className="pl-1 text-red-800 capitalize text-xs">Bloqueado</p>
                   </div>
                 )}
+                {status === "dado de baja" && (
+                  <div className="flex flex-row items-center px-2 py-0.5 bg-red-100 rounded">
+                    <Lock className="size-4 text-red-800" />
+                    <p className="pl-1 text-red-800 capitalize text-xs">Dado de Baja</p>
+                  </div>
+                )}
               </div>
             </div>
             <p className="text-[#2975a0]">{role}</p>
@@ -106,7 +137,7 @@ export default function Usuarios() {
         <div className="md:ml-auto">
           <button className="border-2 border-gray-400 text-[#212529] py-2 px-4 rounded-lg mr-2 inline-flex" onClick={handleUnblock}><LockOpen className="pr-2"/> Desbloquear</button>
           <button className="border-2 border-gray-400 text-[#212529] py-2 px-4 rounded-lg mr-2 inline-flex" onClick={handleBlock}><Lock className="pr-2"/> Bloquear</button>
-          <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition inline-flex"><UserMinus className="pr-2"/> Dar de baja</button>
+          <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition inline-flex" onClick={handleRemoval}><UserMinus className="pr-2"/> Dar de baja</button>
         </div>
       </div>
       <div className="pt-6">
