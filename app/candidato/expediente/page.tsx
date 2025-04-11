@@ -1,4 +1,4 @@
-("use client");
+"use client";
 import { usePathname } from "next/navigation";
 import ExpedienteCandidato from "@/app/components/expedienteCandidato";
 
@@ -8,7 +8,7 @@ export default function UserInformation() {
   return (
     <>
       <ExpedienteCandidato
-        userId={"B7eXqDrAYVeHQ9dVAwb5hcAzd872"}
+        userId={"JAT469lLXCZi8wi4dcq9xzNoVSu1"}
         role="candidate"
       />
     </>
