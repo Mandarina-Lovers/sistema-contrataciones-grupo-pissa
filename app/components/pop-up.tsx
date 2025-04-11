@@ -12,41 +12,66 @@ mensaje: ""
 cierreAuto: si se cierra automáticamente (tiempo) **OPCIONAL**
 tiempo: tiempo en ms para cerrar **OPCIONAL**
 funCerrar: funcion que se ejecuta al cerrar **OPCIONAL**
-*/
 
-"use client"
+USO DEL POPUP:
+// Importar el popup y hooks necesarios
+import { useState } from "react";
+import PopUp from "../components/pop-up";
 
-import { useState } from 'react';
+// Crear el hook del popup
+const [isOpen, setIsOpen] = useState(false);
 
-export default function CardWithPopup() {
-  const [showPopup, setShowPopup] = useState(false);
+const openPopup = () => setIsOpen(true);
+const closePopup = () => setIsOpen(false);
 
   return (
-    <div className="p-6">
-      {/* Card */}
-      <div
-        className="bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition"
-        onClick={() => setShowPopup(true)}
-      >
-        <h2 className="text-xl font-semibold">Haz clic aquí</h2>
-        <p className="text-gray-600">Esto abrirá un popup.</p>
-      </div>
+    <div>
+      // En el botón que quieras que abra un popup y que su onClick sea openPopup
+      <button onClick={openPopup}>Bloquear Usuario</button>
 
-      {/* Popup */}
-      {showPopup && (
-        <div className="fixed inset-0 backdrop-blur-xs flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl shadow-xl relative max-w-sm w-full">
+      // Usar show={isOpen} onClose={closePopup} como argumentos del <PopUp>
+      <PopUp show={isOpen} onClose={closePopup}>
+        // Aquí escribes lo que quieres que tenga el popup
+        <h2 className="font-bold">Mi contenido personalizado</h2>
+        <p>Este texto está dentro de la ventana emergente.</p>
+      </PopUp>
+    </div>
+  );
+}
+*/
+
+"use client";
+import React from "react";
+
+interface PopUpProps {
+  show: boolean;
+  onClose: () => void;
+  children?: React.ReactNode;
+}
+
+export default function PopUp({ show, onClose, children }: PopUpProps) {
+  if (!show) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 backdrop-blur-xs flex items-center justify-center z-50">
+      <div className="bg-white p-8 rounded-xl shadow-xl relative max-w-sm w-full">
+        {children ?? (
+          <>
             <h3 className="text-lg font-bold mb-4">Este es el popup</h3>
-            <p className="mb-4">Contenido del popup que se muestra al hacer clic en la card.</p>
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              onClick={() => setShowPopup(false)}
-            >
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
+            <p className="mb-4">
+              Contenido del popup que se muestra al hacer clic en la card.
+            </p>
+          </>
+        )}
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          onClick={onClose}
+        >
+          Cerrar
+        </button>
+      </div>
     </div>
   );
 }

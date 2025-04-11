@@ -22,7 +22,7 @@ import crypto from "crypto";
 
 const generatePassword = (length: any = 16) => {
   //return crypto.randomBytes(length).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, length);
-  return "estebanlachupa";
+  return "123456";
 };
 
 export default function CreateCredentials() {
@@ -50,7 +50,7 @@ export default function CreateCredentials() {
       const data = {
         apellidos: lastname,
         email: mail,
-        estadoUsuario: "previo", // Andy (10.04 5:10 p.m.) Nuevos Estados de Usuario 
+        estadoUsuario: "previo", // Andy (10.04 5:10 p.m.) Nuevos Estados de Usuario
         nombre: name,
         rol: role,
         telefono: phone,
