@@ -94,7 +94,8 @@ export default function ManagerViewer({
 
         await update(docRef, {
           url: '',
-          estado: 'no_subido'
+          estadoArchivo: 'no_subido',
+          estadoGeneral: 'no_subido',  
         });
 
         console.log("Base de datos actualizada: se eliminó la referencia al archivo");

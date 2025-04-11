@@ -327,6 +327,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
         {
             const docRef = ref(database, `expedientes/${expedienteId}/notas`);
             await set(docRef, notes);
+            alert("Se han guardado las notas exitosamente!");
         } catch (error)
         {
             console.error("Error saving notes:", error);
@@ -381,12 +382,61 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
             {
                 // Copia el documento y actualiza el campo específico
                 const updatedFields = doc.fields.map(field =>
-                    field.key === fieldKey ? {...field, value} : field
-                );
+                {
+                    if (field.key === fieldKey)
+                    {
+                        // Si el campo está vacío, se marca como no_subido, de lo contrario como reviewing
+                        const newState = value.trim() === ''
+                            ? DOCUMENT_STATES.NOT_UPLOADED
+                            : DOCUMENT_STATES.REVIEWING;
+
+                        return {...field, value, state: newState};
+                    }
+                    return field;
+                });
+
+                // Determina el estado de los campos
+                const allFieldsEmpty = updatedFields.every(f => f.value.trim() === '');
+                const anyFieldRejected = updatedFields.some(f => f.state === DOCUMENT_STATES.REJECTED);
+                const allFieldsApproved = updatedFields.every(f => f.state === DOCUMENT_STATES.APPROVED);
+
+                let newFieldsState: DocumentState;
+
+                if (allFieldsEmpty)
+                {
+                    newFieldsState = DOCUMENT_STATES.NOT_UPLOADED;
+                } else if (anyFieldRejected)
+                {
+                    newFieldsState = DOCUMENT_STATES.REJECTED;
+                } else if (allFieldsApproved)
+                {
+                    newFieldsState = DOCUMENT_STATES.APPROVED;
+                } else
+                {
+                    newFieldsState = DOCUMENT_STATES.REVIEWING;
+                }
+
+                // Determina el estado general
+                let newGeneralState: DocumentState;
+                if (newFieldsState === DOCUMENT_STATES.REJECTED || doc.fileState === DOCUMENT_STATES.REJECTED)
+                {
+                    newGeneralState = DOCUMENT_STATES.REJECTED;
+                } else if (newFieldsState === DOCUMENT_STATES.APPROVED && doc.fileState === DOCUMENT_STATES.APPROVED)
+                {
+                    newGeneralState = DOCUMENT_STATES.APPROVED;
+                } else if (newFieldsState === DOCUMENT_STATES.NOT_UPLOADED && doc.fileState === DOCUMENT_STATES.NOT_UPLOADED)
+                {
+                    newGeneralState = DOCUMENT_STATES.NOT_UPLOADED;
+                } else
+                {
+                    newGeneralState = DOCUMENT_STATES.REVIEWING;
+                }
 
                 return {
                     ...doc,
-                    fields: updatedFields
+                    fields: updatedFields,
+                    fieldsState: newFieldsState,
+                    generalState: newGeneralState
                 };
             }
             return doc;
@@ -398,27 +448,99 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
     {
         if (!expedienteId || !currentDocument) return;
 
+        // Obtener el estado actual de los campos
+        const allFieldsEmpty = currentDocument.fields.every(f => f.value.trim() === '');
+        const anyFieldRejected = currentDocument.fields.some(f => f.state === DOCUMENT_STATES.REJECTED);
+        const allFieldsApproved = currentDocument.fields.every(f => f.state === DOCUMENT_STATES.APPROVED);
+
+        // Determinar el estado de los campos
+        let newFieldsState: DocumentState;
+        let dbFieldsState: string;
+
+        if (allFieldsEmpty)
+        {
+            newFieldsState = DOCUMENT_STATES.NOT_UPLOADED;
+            dbFieldsState = 'no_subido';
+        } else if (anyFieldRejected)
+        {
+            newFieldsState = DOCUMENT_STATES.REJECTED;
+            dbFieldsState = 'rechazado';
+        } else if (allFieldsApproved)
+        {
+            newFieldsState = DOCUMENT_STATES.APPROVED;
+            dbFieldsState = 'aprobado';
+        } else
+        {
+            newFieldsState = DOCUMENT_STATES.REVIEWING;
+            dbFieldsState = 'pendiente_de_revisar';
+        }
+
+        // Determinar el estado general
+        let newGeneralState: DocumentState;
+        let dbGeneralState: string;
+
+        if (newFieldsState === DOCUMENT_STATES.REJECTED || currentDocument.fileState === DOCUMENT_STATES.REJECTED)
+        {
+            newGeneralState = DOCUMENT_STATES.REJECTED;
+            dbGeneralState = 'rechazado';
+        } else if (newFieldsState === DOCUMENT_STATES.APPROVED && currentDocument.fileState === DOCUMENT_STATES.APPROVED)
+        {
+            newGeneralState = DOCUMENT_STATES.APPROVED;
+            dbGeneralState = 'aprobado';
+        } else if (newFieldsState === DOCUMENT_STATES.NOT_UPLOADED && currentDocument.fileState === DOCUMENT_STATES.NOT_UPLOADED)
+        {
+            newGeneralState = DOCUMENT_STATES.NOT_UPLOADED;
+            dbGeneralState = 'no_subido';
+        } else
+        {
+            newGeneralState = DOCUMENT_STATES.REVIEWING;
+            dbGeneralState = 'pendiente_de_revisar';
+        }
+
         // Crear un objeto con todos los campos para actualizar la base de datos
-        const fieldsToSave: Record<string, string> = {};
+        const fieldsToSave: Record<string, any> = {};
 
         currentDocument.fields.forEach(field =>
         {
-            fieldsToSave[field.key] = field.value;
+            // Si el campo está vacío, marcarlo como no_subido
+            const fieldState = field.value.trim() === '' ? 'no_subido' : 'pendiente_de_revisar';
+
+            // Guardar en formato objeto con valor y estado
+            fieldsToSave[field.key] = {
+                valor: field.value,
+                estado: fieldState
+            };
         });
 
-        // Referencia a la carpeta de campos del documento actual
-        const camposRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}/campos`);
+        // Actualizar estado local
+        setDocuments(documents.map(doc =>
+            doc.id === selectedDoc
+                ? {
+                    ...doc,
+                    fieldsState: newFieldsState,
+                    generalState: newGeneralState
+                }
+                : doc
+        ));
 
-        // Actualizar todos los campos a la vez
-        update(camposRef, fieldsToSave)
+        // Referencia a la carpeta de campos del documento actual
+        const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
+
+        // Actualizar todos los campos, el estado de campos y el estado general a la vez
+        update(docRef, {
+            campos: fieldsToSave,
+            estadoCampos: dbFieldsState,
+            estadoGeneral: dbGeneralState
+        })
             .then(() =>
             {
                 console.log(`Campos de ${currentDocument.name} actualizados`);
-                alert("Se han guaradados los cambios exitosamente :)!")
+                alert("Se han guardado los cambios exitosamente :)!");
             })
             .catch(err =>
             {
                 console.error(`Error al actualizar campos:`, err);
+                alert("Error al guardar los cambios. Intente nuevamente.");
             });
     };
 
@@ -432,16 +554,35 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
 
         if (window.confirm(message))
         {
+            // Determinar el nuevo estado general basado en la combinación de estados
+            const determineGeneralState = (fileState: DocumentState, fieldsState: DocumentState): DocumentState =>
+            {
+                // Si alguno está rechazado, el estado general es rechazado
+                if (fileState === DOCUMENT_STATES.REJECTED || fieldsState === DOCUMENT_STATES.REJECTED)
+                {
+                    return DOCUMENT_STATES.REJECTED;
+                }
+
+                // Si ambos están aprobados, el estado general es aprobado
+                if (fileState === DOCUMENT_STATES.APPROVED && fieldsState === DOCUMENT_STATES.APPROVED)
+                {
+                    return DOCUMENT_STATES.APPROVED;
+                }
+
+                // Si ninguno está rechazado pero no todos están aprobados, está en revisión
+                return DOCUMENT_STATES.REVIEWING;
+            }
+
+            const newFileState = approved ? DOCUMENT_STATES.APPROVED : DOCUMENT_STATES.REJECTED;
+            const newGeneralState = determineGeneralState(newFileState, currentDocument.fieldsState);
+
             // Actualizar estado local
             setDocuments(documents.map(doc =>
                 doc.id === selectedDoc
                     ? {
                         ...doc,
-                        fileState: approved ? DOCUMENT_STATES.APPROVED : DOCUMENT_STATES.REJECTED,
-                        // Actualizar estado general
-                        generalState: doc.fieldsState === DOCUMENT_STATES.APPROVED && approved
-                            ? DOCUMENT_STATES.APPROVED
-                            : DOCUMENT_STATES.REJECTED
+                        fileState: newFileState,
+                        generalState: newGeneralState
                     }
                     : doc
             ));
@@ -450,9 +591,11 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
             const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
             update(docRef, {
                 estadoArchivo: newState,
-                estadoGeneral: currentDocument.fieldsState === DOCUMENT_STATES.APPROVED && approved
+                estadoGeneral: newGeneralState === DOCUMENT_STATES.APPROVED
                     ? 'aprobado'
-                    : 'rechazado'
+                    : newGeneralState === DOCUMENT_STATES.REJECTED
+                        ? 'rechazado'
+                        : 'pendiente_de_revisar'
             });
 
             alert(`Archivo ${approved ? "aprobado" : "rechazado"} exitosamente.`);
@@ -460,6 +603,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
     };
 
     // Aprobar/Rechazar un campo específico
+    // En handleFieldReview (línea ~415)
     const handleFieldReview = async (fieldKey: string, approved: boolean) =>
     {
         if (!expedienteId || !currentDocument) return;
@@ -479,7 +623,34 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
 
         // Verificar si todos los campos están aprobados
         const allFieldsApproved = updatedFields.every(field => field.state === DOCUMENT_STATES.APPROVED);
-        const newFieldsState = allFieldsApproved ? DOCUMENT_STATES.APPROVED : DOCUMENT_STATES.REJECTED;
+        // Verificar si hay algún campo rechazado
+        const anyFieldRejected = updatedFields.some(field => field.state === DOCUMENT_STATES.REJECTED);
+
+        // Determinar nuevo estado de campos
+        let newFieldsState: DocumentState;
+        if (allFieldsApproved)
+        {
+            newFieldsState = DOCUMENT_STATES.APPROVED;
+        } else if (anyFieldRejected)
+        {
+            newFieldsState = DOCUMENT_STATES.REJECTED;
+        } else
+        {
+            newFieldsState = DOCUMENT_STATES.REVIEWING;
+        }
+
+        // Determinar el estado general
+        let newGeneralState: DocumentState;
+        if (newFieldsState === DOCUMENT_STATES.REJECTED || currentDocument.fileState === DOCUMENT_STATES.REJECTED)
+        {
+            newGeneralState = DOCUMENT_STATES.REJECTED;
+        } else if (newFieldsState === DOCUMENT_STATES.APPROVED && currentDocument.fileState === DOCUMENT_STATES.APPROVED)
+        {
+            newGeneralState = DOCUMENT_STATES.APPROVED;
+        } else
+        {
+            newGeneralState = DOCUMENT_STATES.REVIEWING;
+        }
 
         // Actualizar documento en el estado
         setDocuments(documents.map(doc =>
@@ -488,15 +659,12 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
                     ...doc,
                     fields: updatedFields,
                     fieldsState: newFieldsState,
-                    // Actualizar estado general
-                    generalState: newFieldsState === DOCUMENT_STATES.APPROVED && doc.fileState === DOCUMENT_STATES.APPROVED
-                        ? DOCUMENT_STATES.APPROVED
-                        : DOCUMENT_STATES.REJECTED
+                    generalState: newGeneralState
                 }
                 : doc
         ));
 
-        // Actualizar base de datos
+        // Actualizar base de datos - campos
         const fieldRef = ref(database,
             `expedientes/${expedienteId}/documentos/${currentDocument.name}/campos/${fieldKey}`);
 
@@ -516,13 +684,19 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
             });
         }
 
-        // Actualizar estados generales
+        // Actualizar estados generales en la base de datos
         const docRef = ref(database, `expedientes/${expedienteId}/documentos/${currentDocument.name}`);
         update(docRef, {
-            estadoCampos: allFieldsApproved ? 'aprobado' : 'rechazado',
-            estadoGeneral: allFieldsApproved && currentDocument.fileState === DOCUMENT_STATES.APPROVED
+            estadoCampos: newFieldsState === DOCUMENT_STATES.APPROVED
                 ? 'aprobado'
-                : 'rechazado'
+                : newFieldsState === DOCUMENT_STATES.REJECTED
+                    ? 'rechazado'
+                    : 'pendiente_de_revisar',
+            estadoGeneral: newGeneralState === DOCUMENT_STATES.APPROVED
+                ? 'aprobado'
+                : newGeneralState === DOCUMENT_STATES.REJECTED
+                    ? 'rechazado'
+                    : 'pendiente_de_revisar'
         });
     };
 
@@ -706,12 +880,12 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
                                             : 'bg-gray-100 text-gray-800'
                                     }`}>
                                     {currentDocument.generalState === DOCUMENT_STATES.APPROVED
-                                        ? '✓ Documento aprobado'
+                                        ? '✓ Apartado aprobado'
                                         : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
                                             ? '⟳ Pendiente de revisión'
                                             : currentDocument.generalState === DOCUMENT_STATES.REJECTED
-                                                ? '✗ Documento rechazado'
-                                                : '✗ Documento no subido'}
+                                                ? '✗ Apartado rechazado'
+                                                : '✗ Apartado vacio'}
                                 </div>
                             </div>
 
@@ -942,6 +1116,25 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role})
                                     </button>
                                 )}
                             </div>
+                            {/* Botones de acciones rápidas para administrador */}
+                            {canEdit && (
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={handleApproveAll}
+                                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                                        title="Aprueba el documento y todos sus campos"
+                                    >
+                                        Aprobar Todo
+                                    </button>
+                                    <button
+                                        onClick={handleRejectAll}
+                                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+                                        title="Rechaza el documento y todos sus campos"
+                                    >
+                                        Rechazar Todo
+                                    </button>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>

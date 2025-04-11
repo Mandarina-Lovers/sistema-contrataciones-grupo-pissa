@@ -56,13 +56,16 @@ const Uploader: React.FC<UploaderProps> = ({
             // Actualizar documento existente
             await update(docRef, {
               url: filePath, // Guardar la URL general, no la de descarga
-              estado: "pendiente_de_revisar"
+              estadoGeneral: "pendiente_de_revisar",
+              estadoArchivo: "pendiente_de_revisar"
             });
           } else {
             // Crear nuevo documento si no existe
             await update(docRef, {
               url: filePath,
               estado: "pendiente_de_revisar",
+              estadoGeneral: "pendiente_de_revisar",
+              estadoArchivo: "pendiente_de_revisar",
               campos: {}
             });
           }
