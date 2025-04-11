@@ -22,11 +22,12 @@ export async function POST(request: NextRequest) {
 
     const data = snapshot.val();
     const estadoUsuario = data.estadoUsuario;
+    const rol = data.rol;
 
     // 4. Evaluar si está bloqueado
     const isBlocked = estadoUsuario === "bloqueado";
 
-    return NextResponse.json({ blocked: isBlocked });
+    return NextResponse.json({ blocked: isBlocked, role: rol }, { status: 200 });
 
   } catch (error) {
     console.error("Error al verificar usuario:", error);

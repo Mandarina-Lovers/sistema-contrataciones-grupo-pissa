@@ -62,8 +62,8 @@ export default function Formulario() {
       if (response.ok) {
         console.log("El uid se ha guardado en una cookie :)");
       }
-      // Redirigir después del inicio de sesión exitoso
-      router.push("/dashboard");
+      // Redirigir después del inicio de sesión exitoso al control de acceso
+      router.push("/auth/redirector");
     } catch (err: any) {
       console.error("Error during login:", err);
 

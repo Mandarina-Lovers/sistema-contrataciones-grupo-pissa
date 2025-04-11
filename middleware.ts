@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // 1. Leer cookie "candidateId" (httpOnly, accesible desde el servidor)
+  const pathname = request.nextUrl.pathname;
   const userId = request.cookies.get("candidateId");
 
   if (!userId) {
-    // Si no hay cookie, redirigir al inicio de sesión
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // 2. Validar al usuario desde un endpoint propio (por ejemplo: verificar si existe, está activo, etc.)
-  const res = await fetch(`${request.nextUrl.origin}/api/checkUser`, {
+  // Validate user
+  const checkUserRes = await fetch(`${request.nextUrl.origin}/api/checkUser`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -18,27 +17,51 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  if (!res.ok) {
-    // Algo salió mal, redirige al inicio
+
+  if (!checkUserRes.ok) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  const data = await res.json();
+  const { blocked, role } = await checkUserRes.json();
 
-  // 3. Redirigir si el usuario está bloqueado o no tiene acceso
-  if (data.blocked) {
-    return NextResponse.redirect(new URL("/blocked", request.url));
+  if (blocked) {
+    return NextResponse.redirect(new URL("/bloqueado", request.url));
   }
 
-  // 4. Si todo bien, seguir con la petición
+  // Redirect on /auth/redirector
+  if (pathname === "/auth/redirector") {
+    if (role === "candidato") {
+      console.log("➡️ Redirecting candidato to expediente");
+      return NextResponse.redirect(new URL("/candidato/expediente", request.url));
+    }
+    if (role === "rh") {
+      console.log("➡️ Redirecting RH to dashboard");
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    return NextResponse.redirect(new URL("/", request.url));
+  }
+
+  // 🔄 Order matters: check /candidato FIRST
+  if (pathname.startsWith("/candidato") && role !== "candidato") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  else if (pathname.startsWith("/dashboard") && role !== "rh") {
+    return NextResponse.redirect(new URL("/candidato/expediente", request.url));
+  }
+
+  console.log("✅ Access granted");
+  
+  
   return NextResponse.next();
 }
 
+// Protect these routes
 export const config = {
   matcher: [
-    "/dashboard",
+    "/auth/redirector",
     "/dashboard/:path*",
-    "/expediente-candidatos",
-    "/expediente-candidatos/:path*"
+    "/candidato/:path*"
   ],
 };
