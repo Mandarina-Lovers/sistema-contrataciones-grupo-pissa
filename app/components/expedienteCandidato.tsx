@@ -5,10 +5,13 @@ import {ChevronDown, ChevronUp, Check, X, Clock, ThumbsUp, ThumbsDown} from 'luc
 import {set, ref, get, update} from 'firebase/database';
 import {database} from '@/firebaseConfig';
 import ManagerViewer from "@/app/components/ManagerViewer";
+import Uploadere from "@/app/components/Uploader"
 
+// Actualizar la interfaz de props
 interface ExpedienteCandidatoProps
 {
-    userId: string | undefined; // Adjust type if needed
+    userId: string | undefined;
+    role: 'admin' | 'candidate'; // Nueva propiedad para diferenciar roles
 }
 
 
@@ -102,7 +105,7 @@ const StateIcon: React.FC<StateIconProps> = ({state}) =>
     }
 };
 
-const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
+const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId, role}) =>
 {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [selectedDoc, setSelectedDoc] = useState<number>(1);
@@ -175,7 +178,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                 if (!foundExpedienteId)
                 {
                     // Si no existe un expediente, lo creamos
-                    const newExpedienteRef = ref(database, 'expedientes/expediente' + Date.now());
+                    const newExpedienteRef = ref(database, 'expedientes/expediente' + candidateId);
                     await update(newExpedienteRef, {
                         id_candidato: candidateId,
                         notas: "", // Initialize notas as empty string
@@ -522,7 +525,7 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                 : 'rechazado'
         });
     };
-    
+
     // Función para aprobar todo (archivo y campos)
     const handleApproveAll = async () =>
     {
@@ -645,6 +648,8 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
         return <div className="p-6 text-center text-red-500">{error}</div>;
     }
 
+    const canEdit = role === 'admin';
+
     return (
         <>
             <div className="flex w-full border border-gray-200 rounded-lg overflow-hidden">
@@ -689,6 +694,27 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                 <div className="w-1/2 bg-gray-50 p-4 overflow-y-auto" style={{maxHeight: "90vh"}}>
                     {currentDocument && (
                         <>
+                            {/* Estado general del documento */}
+                            <div className="mb-4 p-3 rounded-lg shadow-sm bg-white">
+                                <h2 className="text-lg font-bold mb-2">Estado del documento: {currentDocument.name}</h2>
+                                <div className={`p-2 rounded-md text-center font-medium ${currentDocument.generalState === DOCUMENT_STATES.APPROVED
+                                    ? 'bg-green-100 text-green-800'
+                                    : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
+                                        ? 'bg-yellow-100 text-yellow-800'
+                                        : currentDocument.generalState === DOCUMENT_STATES.REJECTED
+                                            ? 'bg-red-100 text-red-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                    }`}>
+                                    {currentDocument.generalState === DOCUMENT_STATES.APPROVED
+                                        ? '✓ Documento aprobado'
+                                        : currentDocument.generalState === DOCUMENT_STATES.REVIEWING
+                                            ? '⟳ Pendiente de revisión'
+                                            : currentDocument.generalState === DOCUMENT_STATES.REJECTED
+                                                ? '✗ Documento rechazado'
+                                                : '✗ Documento no subido'}
+                                </div>
+                            </div>
+
                             {/* Visualización del archivo */}
                             <div className="mb-6 p-4 bg-white rounded-lg shadow-sm">
                                 <h3 className="font-medium text-lg mb-3">
@@ -721,41 +747,57 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                             fileName={currentDocument.file}
                                             folder="pruebaInicial"
                                             onFileDeleted={handleDeleteFile}
-                                            userRole="RH"
+                                            userRole={role === 'admin' ? "RH" : "candidato"}
                                         />
 
-                                        {/* Botones de revisión del archivo */}
-                                        <div className="mt-4 pt-3 border-t border-gray-200">
-                                            <h4 className="font-medium mb-2">Revisión del archivo PDF:</h4>
-                                            <div className="flex space-x-3">
-                                                <button
-                                                    onClick={() => handleFileReview(true)}
-                                                    className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.APPROVED
-                                                        ? 'bg-green-200 text-green-800'
-                                                        : 'bg-green-600 text-white hover:bg-green-700'
-                                                        }`}
-                                                >
-                                                    <ThumbsUp size={16} className="mr-2" />
-                                                    {currentDocument.fileState === DOCUMENT_STATES.APPROVED ? 'Aprobado' : 'Aprobar'}
-                                                </button>
+                                        {/* Botones de revisión del archivo solo para admin */}
+                                        {canEdit && (
+                                            <div className="mt-4 pt-3 border-t border-gray-200">
+                                                <h4 className="font-medium mb-2">Revisión del archivo PDF:</h4>
+                                                <div className="flex space-x-3">
+                                                    <button
+                                                        onClick={() => handleFileReview(true)}
+                                                        className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.APPROVED
+                                                            ? 'bg-green-200 text-green-800'
+                                                            : 'bg-green-600 text-white hover:bg-green-700'
+                                                            }`}
+                                                    >
+                                                        <ThumbsUp size={16} className="mr-2" />
+                                                        {currentDocument.fileState === DOCUMENT_STATES.APPROVED ? 'Aprobado' : 'Aprobar'}
+                                                    </button>
 
-                                                <button
-                                                    onClick={() => handleFileReview(false)}
-                                                    className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.REJECTED
-                                                        ? 'bg-red-200 text-red-800'
-                                                        : 'bg-red-600 text-white hover:bg-red-700'
-                                                        }`}
-                                                >
-                                                    <ThumbsDown size={16} className="mr-2" />
-                                                    {currentDocument.fileState === DOCUMENT_STATES.REJECTED ? 'Rechazado' : 'Rechazar'}
-                                                </button>
+                                                    <button
+                                                        onClick={() => handleFileReview(false)}
+                                                        className={`flex items-center px-3 py-2 rounded transition-colors ${currentDocument.fileState === DOCUMENT_STATES.REJECTED
+                                                            ? 'bg-red-200 text-red-800'
+                                                            : 'bg-red-600 text-white hover:bg-red-700'
+                                                            }`}
+                                                    >
+                                                        <ThumbsDown size={16} className="mr-2" />
+                                                        {currentDocument.fileState === DOCUMENT_STATES.REJECTED ? 'Rechazado' : 'Rechazar'}
+                                                    </button>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                                        <X size={32} className="mx-auto text-gray-400 mb-2" />
-                                        <p className="text-gray-500">El candidato aún no ha subido este documento</p>
+                                        {role === 'admin' ? (
+                                            <>
+                                                <X size={32} className="mx-auto text-gray-400 mb-2" />
+                                                <p className="text-gray-500">El candidato aún no ha subido este documento</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Uploadere
+                                                    expedienteId={expedienteId || undefined}
+                                                    documentoId={currentDocument.name}
+                                                    onFileUploaded={handleFileUpload}
+                                                    folder="pruebaInicial"
+                                                />
+                                                <p className="text-gray-500 mt-2">Haz clic para subir tu documento</p>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -790,28 +832,31 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                     <label className="text-sm font-medium text-gray-700">
                                                         {field.label}
                                                     </label>
-                                                    <div className="flex space-x-1">
-                                                        <button
-                                                            onClick={() => handleFieldReview(field.key, true)}
-                                                            className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.APPROVED
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : 'bg-gray-100 hover:bg-green-100 text-gray-700 hover:text-green-700'
-                                                                }`}
-                                                            title="Aprobar campo"
-                                                        >
-                                                            <ThumbsUp size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleFieldReview(field.key, false)}
-                                                            className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.REJECTED
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : 'bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700'
-                                                                }`}
-                                                            title="Rechazar campo"
-                                                        >
-                                                            <ThumbsDown size={14} />
-                                                        </button>
-                                                    </div>
+                                                    {/* Botones solo visibles para admin */}
+                                                    {canEdit && (
+                                                        <div className="flex space-x-1">
+                                                            <button
+                                                                onClick={() => handleFieldReview(field.key, true)}
+                                                                className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.APPROVED
+                                                                    ? 'bg-green-100 text-green-700'
+                                                                    : 'bg-gray-100 hover:bg-green-100 text-gray-700 hover:text-green-700'
+                                                                    }`}
+                                                                title="Aprobar campo"
+                                                            >
+                                                                <ThumbsUp size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleFieldReview(field.key, false)}
+                                                                className={`p-1.5 rounded transition-colors ${field.state === DOCUMENT_STATES.REJECTED
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700'
+                                                                    }`}
+                                                                title="Rechazar campo"
+                                                            >
+                                                                <ThumbsDown size={14} />
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center">
                                                     <input
@@ -823,7 +868,13 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                                 : 'border-gray-300'
                                                             }`}
                                                         value={field.value}
-                                                        readOnly
+                                                        onChange={
+                                                            // Solo permitir edición para candidato
+                                                            role === 'candidate'
+                                                                ? (e) => handleFieldChange(field.key, e.target.value)
+                                                                : undefined
+                                                        }
+                                                        readOnly={role === 'admin'}
                                                     />
                                                     <span className={`ml-2 p-1 rounded-full ${field.state === DOCUMENT_STATES.APPROVED
                                                         ? 'bg-green-500'
@@ -845,6 +896,18 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                                 </div>
                                             </div>
                                         ))}
+
+                                        {/* Botón de guardar solo para candidato */}
+                                        {role === 'candidate' && (
+                                            <div className="mt-4 flex justify-end">
+                                                <button
+                                                    onClick={handleSaveFields}
+                                                    className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                                >
+                                                    Guardar Cambios
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
@@ -853,42 +916,31 @@ const ExpedienteCandidato: React.FC<ExpedienteCandidatoProps> = ({userId}) =>
                                 )}
                             </div>
 
-                            {/* Notas del documento */}
+                            {/* Notas del documento - solo editable para admin */}
                             <div className="p-4 bg-white rounded-lg shadow-sm">
-                                <h3 className="text-lg font-semibold mb-2">Notas del Candidato</h3>
+                                <h3 className="text-lg font-semibold mb-2">
+                                    {role === 'admin' ? 'Notas del Candidato' : 'Notas'}
+                                </h3>
                                 <textarea
-                                    className="w-full p-2 border rounded-md"
+                                    className={`w-full p-2 border rounded-md ${role === 'candidate' ? 'bg-gray-50' : ''}`}
                                     rows={4}
                                     value={notes}
-                                    onChange={handleNotesChange}
-                                    placeholder="Añadir notas sobre este candidato..."
+                                    onChange={canEdit ? handleNotesChange : undefined}
+                                    placeholder={
+                                        role === 'admin'
+                                            ? "Añadir notas sobre este candidato..."
+                                            : "No hay notas disponibles"
+                                    }
+                                    readOnly={!canEdit}
                                 />
-                                <button
-                                    onClick={saveNotes}
-                                    className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                                >
-                                    Guardar Notas
-                                </button>
-
-                            </div>
-                            {/* Botones para aprobar/rechazar todo */}
-                            <div className="mt-3 flex space-x-3 justify-start">
-                                <button
-                                    onClick={handleApproveAll}
-                                    className="flex items-center px-3 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors"
-                                    disabled={!currentDocument.file || currentDocument.fields.length === 0}
-                                >
-                                    <Check size={16} className="mr-2" />
-                                    Aprobar Todo
-                                </button>
-                                <button
-                                    onClick={handleRejectAll}
-                                    className="flex items-center px-3 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
-                                    disabled={!currentDocument.file || currentDocument.fields.length === 0}
-                                >
-                                    <X size={16} className="mr-2" />
-                                    Rechazar Todo
-                                </button>
+                                {canEdit && (
+                                    <button
+                                        onClick={saveNotes}
+                                        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                    >
+                                        Guardar Notas
+                                    </button>
+                                )}
                             </div>
                         </>
                     )}
