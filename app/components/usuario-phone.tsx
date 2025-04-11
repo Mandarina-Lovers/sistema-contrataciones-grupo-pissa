@@ -5,8 +5,8 @@ import {database} from "../../firebaseConfig"
 import {ref, get, set} from "firebase/database"
 import path from "path";
 import ProfilePicture from "./profile-picture";
-
-
+import { CircleCheck, Ellipsis, MoveLeft, Lock, CircleUser, Mail, Phone } from "lucide-react";
+import { urbanist } from "./fonts";
 
 interface User {
   id: string;
@@ -17,7 +17,7 @@ interface User {
   telefono?: string;
 }
 
-export default function ListInformation() {
+export default function Usuarios() {
   const router = useRouter();
   const pathname = usePathname();
   const searchparams = useSearchParams();
@@ -30,22 +30,46 @@ export default function ListInformation() {
   const id =  pathname.split("/")[2];
 
 
+  const handleRemoval = async () => {
+
+    //console.log("something is happening")
+    await set(ref(database, `usuarios/${id}/estadoUsuario`), "dado de baja").then(() => {
+
+      setStatus("dado de baja");
+    })
+  
+    
+  }
+
   const handleBlock = async () => {
 
+    if (status != "dado de baja") {
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "bloqueado").then(() => {
 
       setStatus("bloqueado");
     })
-    
+  }
+  else {
+    alert("No se puede bloquear un usuario que ya esta dado de baja.");
+  }
+
   }
 
   const handleUnblock = async () => {
 
+
+    if (status != "dado de baja") {
+    
+      
     await set(ref(database, `usuarios/${id}/estadoUsuario`), "normal").then(() => {
 
       setStatus("normal");
     })
 
+  }
+  else {
+    alert("No se puede desbloquear un usuario que esta dado de baja.")
+  }
   }
 
   useEffect(() => {
@@ -75,33 +99,35 @@ export default function ListInformation() {
       }
       fetchUser();
       }, []);
-    
-  
-  
-
-  
+ 
   return (
-    <div className="flex flex-col items-center p-6 min-h-screen w-300">
-      <h1 className="text-4xl font-extrabold text-black mb-6">User Information</h1>
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-96 text-center transform transition duration-500 hover:scale-105">
-        <img
-          src="https://via.placeholder.com/150"
-          alt="Profile"
-          className="w-32 h-32 rounded-full mx-auto mb-4 border-4 border-blue-500 shadow-md"
-        />
-        <h2 className="text-2xl font-bold text-gray-800">{name + " " + lastname}</h2>
-        <p className="text-gray-600 text-sm">{role}</p>
-        <p className="mt-4 text-gray-700 text-md italic">{mail}</p>
-        <p className="mt-4 text-gray-700 text-md italic">{phone}</p>
-        <p className="mt-4 text-gray-700 text-md italic">{status}</p>
+    <div className="flex flex-col">
+      <div className="flex flex-row justify-between">
+        <a href="/dashboard/personas"><MoveLeft/></a>
+        <h1 className={`${urbanist.className} text-2xl text-[#212529]`}><strong>Perfil</strong></h1>
+        <Ellipsis/>
       </div>
-      
-
-      <div className="mt-4 flex flex-row gap-5 w-200">
-        <button className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition">Convertir en RH</button>
-        <button className="w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition" onClick={handleUnblock}>Desbloquear</button>
-        <button className="w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-orange-600 transition" onClick={handleBlock}>Bloquear</button>
-        <button className="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition">Dar de baja</button>
+      <div className="flex flex-col items-center justify-center pt-10">
+        <ProfilePicture nombre={`${name}`} width={"w-25"} height={"h-25"} textSize={"text-5xl"}/>
+        <div className="flex flex-row items-center pt-8">
+          <h2 className={`${urbanist.className} text-3xl text-[#212529]`}><strong>{name} {lastname}</strong></h2>
+          <div className="pl-2">
+            <div className="flex flex-row items-center">
+              {status === "normal" && (
+                <CircleCheck className="size-4 text-green-800" />
+              )}
+              {status === "bloqueado" && (
+                <Lock className="size-4 text-red-800" />
+              )}
+            </div>
+          </div>
+        </div>
+        <p className="text-[#2975a0] text-xl">{role}</p>
+        <div className="items-center flex justify-center flex-col text-sm">
+          <p className="inline-flex gap-2 px-2 py-0.5 bg-gray-200 rounded mt-4"><CircleUser className="size-4"/>{id}</p>
+          <p className="inline-flex gap-2 px-2 py-0.5 bg-gray-200 rounded mt-2"><Mail className="size-4"/>{mail}</p>
+          <p className="inline-flex gap-2 px-2 py-0.5 bg-gray-200 rounded mt-2"><Phone className="size-4"/>{phone}</p>
+        </div>
       </div>
     </div>
   );

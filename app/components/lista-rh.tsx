@@ -1,11 +1,8 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { database } from "../../firebaseConfig";
-import { ref, get } from "firebase/database";
 import ProfilePicture from "./profile-picture";
 import { Mail, Phone, LayoutGrid, Table2 } from "lucide-react";
+import { urbanist } from "./fonts";
 
 interface User {
   id: string;
@@ -28,7 +25,7 @@ const UserCard = ({ user }: { user: User }) => {
         <div className="flex-none pr-2">
           <ProfilePicture nombre={`${user.nombre || ""}`} width={"w-8"} height={"h-8"} textSize={"text-xl"} />
         </div>
-        <div className="text-lg font-semibold text-black pb-4 flex-auto">{user.nombre || "N/A"} {user.apellidos || ""}</div>
+        <div className={`${urbanist.className} text-lg font-semibold text-black pb-4 flex-auto`}>{user.nombre || "N/A"} {user.apellidos || ""}</div>
         <div className="text-sm text-[#2975a0] flex-initial">{user.rol || "N/A"}</div>
       </div>
       <div className="text-sm text-[#495057] flex flex-row"><Mail className="pr-2"/> {user.email || "N/A"}</div>
@@ -44,38 +41,30 @@ export default function ListRecursos() {
   const [activo, setActivo] = useState<"grid" | "tabla"> ("grid");
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const snapshot = await get(ref(database, "usuarios"));
-        if (!snapshot.exists()) return;
-
-        const dataValue = snapshot.val();
-        if (typeof dataValue !== "object" || dataValue === null) return;
-
-        const usersArray = Object.entries(dataValue).map(([id, value]) => ({
-          id,
-          ...(value as Omit<User, "id">),
-        }));
-
-        setUsers(usersArray);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchUsers();
-  }, []);
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch("/api/users");
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error("Error al cargar usuarios", err);
+    }
+  };
+  fetchUsers();
+}, []);
 
   const filtrarUsuarios = users.filter((user) => {
     const buscar = searchTerm.toLowerCase();
     const esRecursos = user.rol?.toUpperCase() === "RH";
+    const nombreCompleto = `${user.nombre || ""} ${user.apellidos || ""}`.toLocaleLowerCase();
   
     return esRecursos && (
       user.id?.toLowerCase().includes(buscar) ||
       user.nombre?.toLowerCase().includes(buscar) ||
       user.apellidos?.toLowerCase().includes(buscar) ||
       user.email?.toLowerCase().includes(buscar) ||
-      user.rol?.toLowerCase().includes(buscar)
+      user.telefono?.includes(buscar) ||
+      nombreCompleto.includes(buscar)
     );
   });
 
@@ -95,7 +84,7 @@ export default function ListRecursos() {
 
   return (
     <main className="flex-1 p-4">
-      <div className="mb-4 flex gap-4 text-black">
+      <div className="mb-4 flex gap-6 text-black">
         {/*<label>Ordenar por:</label>*/}
         <input
           type="text"
@@ -115,20 +104,20 @@ export default function ListRecursos() {
           <option value="apellidoAZ">Apellido A → Z</option>
           <option value="apellidoZA">Apellido Z → A</option>
         </select>
-        <div className="flex">
+        <div className="md:flex shadow-md bg-white rounded-l-lg rounded-r-lg hidden">
           <button
           onClick={() => setActivo("grid")} 
-          className={`bg-white rounded-l-lg shadow-md p-1 pl-2 pr-2 transition-colors border ${
+          className={`rounded-lg  p-1 pl-2 pr-2 transition-colors border ${
             activo === "grid"
-            ? "border-blue-500 text-blue-500"
-            : "border-transparent hover:text-blue-500"
+            ? "border-[#2d4583] text-[#2d4583]"
+            : "border-transparent hover:text-[#2d4583]"
           }`}><LayoutGrid/></button>
           <button
           onClick={() => setActivo("tabla")} 
-          className={`bg-white rounded-r-lg shadow-md p-1 pl-2 pr-2 transition-colors border ${
+          className={`rounded-lg p-1 pl-2 pr-2 transition-colors border ${
             activo === "tabla"
-            ? "border-blue-500 text-blue-500"
-            : "border-transparent hover:text-blue-500"
+            ? "border-[#2d4583] text-[#2d4583]"
+            : "border-transparent hover:text-[#2d4583]"
           }`}><Table2/></button>
         </div>
       </div>

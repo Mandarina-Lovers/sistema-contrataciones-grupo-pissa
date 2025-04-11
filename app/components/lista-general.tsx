@@ -11,7 +11,6 @@ interface User {
   rol?: string;
   email?: string;
   telefono?: string;
-  status?: string;
 }
 
 const UserCard = ({ user }: { user: User }) => {
@@ -35,7 +34,7 @@ const UserCard = ({ user }: { user: User }) => {
   );
 };
 
-export default function ListUsers() {
+export default function ListEmpleados() {
   const [users, setUsers] = useState<User[]>([]);
   const [sortOption, setSortOption] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,20 +51,19 @@ export default function ListUsers() {
       }
     };
     fetchUsers();
-  }, []);  
+  }, []);
 
   const filtrarUsuarios = users.filter((user) => {
-    const buscar = searchTerm.toLowerCase();
-    const esCandidato = user.rol?.toLowerCase() === "candidato";
+    const buscar = searchTerm.toLowerCase();  
     const nombreCompleto = `${user.nombre || ""} ${user.apellidos || ""}`.toLocaleLowerCase();
   
-    return esCandidato && (
-      user.id?.toLowerCase().includes(buscar) ||
-      user.nombre?.toLowerCase().includes(buscar) ||
-      user.apellidos?.toLowerCase().includes(buscar) ||
-      user.email?.toLowerCase().includes(buscar) ||
-      user.telefono?.includes(buscar) ||
-      nombreCompleto.includes(buscar)
+    return (
+        user.id?.toLowerCase().includes(buscar) ||
+        user.nombre?.toLowerCase().includes(buscar) ||
+        user.apellidos?.toLowerCase().includes(buscar) ||
+        user.email?.toLowerCase().includes(buscar) ||
+        user.telefono?.includes(buscar) ||
+        nombreCompleto.includes(buscar)
     );
   });
 

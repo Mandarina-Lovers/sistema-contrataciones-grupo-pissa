@@ -14,7 +14,6 @@ tiempo: tiempo en ms para cerrar **OPCIONAL**
 funCerrar: funcion que se ejecuta al cerrar **OPCIONAL**
 */
 
-
 'use client'
 
 import { X } from "lucide-react";
