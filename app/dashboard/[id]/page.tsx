@@ -1,17 +1,14 @@
-"use client"
-import { usePathname } from "next/navigation";
-import ListInformation from '@/app/components/usuario-phone'
-import Usuarios from '@/app/components/usuario';
-import ExpedienteCandidato from "@/app/components/expedienteCandidato";
+import UserInfo from "@/app/components/userinfo";
+export default async function UserInformation({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
-export default function UserInformation() {
-    const pathname = usePathname();
-    const id = pathname.split("/").pop(); // Extract the last segment of the path
-    return(
-        <>
-        <div className='hidden md:block'><Usuarios/></div>
-        <div className='block md:hidden'><ListInformation/></div>
-        <ExpedienteCandidato userId={id} role='admin'/>
-        </>
-    );
+  return (
+    <div>
+      <UserInfo id={id} />
+    </div>
+  );
 }
