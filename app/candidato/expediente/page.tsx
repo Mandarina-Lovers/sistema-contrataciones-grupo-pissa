@@ -1,4 +1,3 @@
-"use client";
 import { cookies } from "next/headers";
 import ExpedienteCandidato from "@/app/components/expedienteCandidato";
 

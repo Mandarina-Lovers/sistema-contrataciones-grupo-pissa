@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/auth/redirector",
-    "/dashboard/:path*",
-    "/candidato/:path*"
+    //"/dashboard/:path*",
+    //"/candidato/:path*"
   ],
 };

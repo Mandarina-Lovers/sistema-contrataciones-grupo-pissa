@@ -2,7 +2,7 @@ import SideNav from "../components/sidenav";
 import SideNavPhone from "../components/sidenav-phone";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const role = "RH"; 
+  const role = "candidato"; 
 
   return (
     <div className="flex h-screen flex-col md:flex-row md:overflow-hidden bg-white">
